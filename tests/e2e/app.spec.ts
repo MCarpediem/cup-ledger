@@ -47,7 +47,7 @@ test('first use, search, configure, save, move to another day, and delete stay c
   await noOverflow(page);
   await save(page);
   await expect(page.getByRole('progressbar', { name: '咖啡因', exact: true })).toHaveAttribute('aria-valuenow', '280');
-  await expect(page.getByRole('progressbar', { name: '白水', exact: true })).toHaveAttribute('aria-valuenow', '0');
+  await expect(page.getByRole('progressbar', { name: '水', exact: true })).toHaveAttribute('aria-valuenow', '0');
   await page.getByRole('link', { name: '统计', exact: true }).click();
   await expect(page.getByText('日均按 2 个自然日计算，截至今天。')).toBeVisible();
   await expect(page.getByText('日均 140 mg', { exact: true })).toBeVisible();
@@ -77,13 +77,13 @@ test('plain water qualifies, sparkling water does not, and loaded app works offl
   await save(page);
   await choose(page, '无糖气泡水');
   await save(page);
-  await expect(page.getByRole('progressbar', { name: '白水', exact: true })).toHaveAttribute('aria-valuenow', '1000');
+  await expect(page.getByRole('progressbar', { name: '水', exact: true })).toHaveAttribute('aria-valuenow', '1000');
   await page.getByRole('link', { name: '统计', exact: true }).click();
   await expect(page.getByText('日均 500 ml', { exact: true })).toBeVisible();
   await context.setOffline(false);
   await page.reload();
   await page.getByRole('link', { name: '今日', exact: true }).click();
-  await expect(page.getByRole('progressbar', { name: '白水', exact: true })).toHaveAttribute('aria-valuenow', '1000');
+  await expect(page.getByRole('progressbar', { name: '水', exact: true })).toHaveAttribute('aria-valuenow', '1000');
 });
 test('custom drink editing and deletion preserve history and missing nutrition', async ({ page }) => {
   await start(page);
@@ -167,7 +167,7 @@ test('week/month calendars deduplicate drinks, show overflow, and year has no ca
   await page.getByRole('button', { name: '年', exact: true }).click();
   await expect(page.getByRole('region', { name: /日历/ })).toHaveCount(0);
   await expect(page.getByText('日均按 272 个自然日计算，截至今天。')).toBeVisible();
-  await expect(page.getByRole('heading', { name: '水', exact: true })).toHaveCount(2);
+  await expect(page.getByRole('heading', { name: '水', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: '上一个周期' }).click();
   await expect(page.getByText('日均按 365 个自然日计算，包含没有记录的日期。')).toBeVisible();
   await noOverflow(page);
@@ -266,7 +266,7 @@ test('today and records keep one inline entry, with readable compact empty state
   await expect(page.getByRole('region', { name: '记录概览' })).toContainText('1 条记录');
   await expect(page.getByRole('link', { name: '添加饮品', exact: true })).toHaveCount(1);
   const record = page.getByRole('link', { name: '编辑 水', exact: true });
-  const textStyle = await record.locator('p').last().evaluate(el => ({ size: parseFloat(getComputedStyle(el).fontSize), spacing: parseFloat(getComputedStyle(el).letterSpacing) }));
+  const textStyle = await record.locator('em').last().evaluate(el => ({ size: parseFloat(getComputedStyle(el).fontSize), spacing: parseFloat(getComputedStyle(el).letterSpacing) }));
   expect(textStyle.size).toBeGreaterThanOrEqual(13);
   expect(textStyle.spacing).toBeGreaterThan(0);
   await page.setViewportSize({ width: 320, height: 720 });
@@ -410,7 +410,7 @@ test('measurement colors are warm and statistics align centrally across periods'
   await start(page);
   await expect(page.getByRole('link', { name: '今日', exact: true }).locator('svg')).toHaveClass(/lucide-calendar-days/);
   const daily = page.getByRole('region', { name: '摄入指标' });
-  await expect(daily.getByText('白水', { exact: true })).toHaveCSS('color', 'rgb(125, 105, 91)');
+  await expect(daily.getByText('水', { exact: true })).toHaveCSS('color', 'rgb(102, 88, 79)');
   await page.getByRole('link', { name: '统计', exact: true }).click();
   const metrics = page.getByRole('group', { name: '周期摄入指标' });
   for (const period of ['周', '月', '年']) {
@@ -422,4 +422,22 @@ test('measurement colors are warm and statistics align centrally across periods'
   }
   await page.evaluate(() => document.fonts.ready);
   await metrics.screenshot({ path: testInfo.outputPath('centered-metrics.png') });
+});
+
+
+test('water is labeled as water, caffeine and sugar bars use warm red, and preferences omit water', async ({ page }) => {
+  await start(page); await seed(page);
+  await expect(page.getByRole('progressbar', { name: '水', exact: true })).toBeVisible();
+  await expect(page.getByRole('progressbar', { name: '白水', exact: true })).toHaveCount(0);
+  const caffeineBar = page.getByRole('progressbar', { name: '咖啡因', exact: true }).locator('i');
+  const sugarBar = page.getByRole('progressbar', { name: '饮品总糖', exact: true }).locator('i');
+  await expect(caffeineBar).toHaveCSS('background-color', 'rgb(196, 106, 93)');
+  await expect(sugarBar).toHaveCSS('background-color', 'rgb(185, 87, 78)');
+  await page.getByRole('link', { name: '统计', exact: true }).click();
+  const preferences = page.getByText('杯中的偏好', { exact: true }).locator('..').locator('..');
+  await expect(preferences).not.toContainText('普通饮用水');
+  await expect(page.getByRole('heading', { name: '拿铁咖啡', exact: true }).first()).toBeVisible();
+  const record = page.getByRole('link', { name: '编辑 拿铁咖啡' }).first();
+  await expect(record.locator('[class*="recordNutrients"]')).toBeVisible();
+  await expect(record.locator('[class*="recordAction"]')).toContainText('查看详情');
 });

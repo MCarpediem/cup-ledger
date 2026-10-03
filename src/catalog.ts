@@ -18,8 +18,8 @@ function drink(id: string, name: string, category: Category, volume: number, nut
   return { id, name, category, volume, nutrition, plainWater: false, basis: '100ml', sources: allSources('estimated'), abv: null, alcoholManual: false, note: '通用配方估算，非品牌商品数据；请按包装标签或实际配方调整。', ...extra };
 }
 export const catalog: Beverage[] = [
-  drink('water-plain', '水', 'water', 250, zeroNutrition(), { plainWater: true, note: '普通白水，成分按 0 记录。' }),
-  drink('water-sparkling', '无糖气泡水', 'other', 330, zeroNutrition(), { note: '不计入白水目标；无糖款通用估算。' }),
+  drink('water-plain', '水', 'water', 250, zeroNutrition(), { plainWater: true, note: '普通水，成分按 0 记录。' }),
+  drink('water-sparkling', '无糖气泡水', 'other', 330, zeroNutrition(), { note: '不计入水目标；无糖款通用估算。' }),
   drink('coffee-americano', '美式咖啡', 'coffee', 250, n(40, 0, 0.2, 2), { variants: [
     { id: 'regular', name: '标准浓度', nutrition: n(40, 0, 0.2, 2) },
     { id: 'strong', name: '加浓', nutrition: n(60, 0, 0.3, 3) },

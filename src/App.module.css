@@ -94,3 +94,40 @@
  .categoryOption strong{font-size:15px}
  .categoryOption .badge,.allCategoryIcon{width:32px}
 }
+
+/* Metric hierarchy and record cards. */
+.metric_water .metricLabel>span:first-child{color:#66584F}
+.metric_caffeine .metricLabel>span:first-child{color:#6D4B43}
+.metric_sugar .metricLabel>span:first-child{color:#75483F}
+.metric_water .metricValue,.metric_water .intakeGrid p{color:#79614F}
+.metric_caffeine .metricValue{color:#70483E}
+.metric_sugar .metricValue{color:#7A463D}
+.metric_caffeine .progress i{background:#C46A5D}
+.metric_sugar .progress i{background:#B9574E}
+.metric_caffeine.near .progress i,.metric_sugar.near .progress i{background:#B9574E}
+.metric_caffeine.over .progress i,.metric_sugar.over .progress i{background:#9F3D3A}
+.metric_caffeine .metricHint,.metric_sugar .metricHint{color:#80544A}
+.record{display:block;padding:18px 0 16px;border-bottom:1px solid var(--line);transition:background .16s ease}
+.record:hover{background:#F3E9DF}
+.recordTop{display:flex;align-items:center;gap:14px}
+.recordTop .recordBody{flex:1;min-width:0}
+.recordHeading{margin:0}
+.recordHeading h3{font-size:18px;font-weight:700;color:#4B3A32}
+.recordHeading time{font-size:15px;color:#806C5D}
+.recordMeta{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.volumePill,.specPill{display:inline-flex;align-items:center;min-height:28px;border-radius:20px;padding:4px 10px;background:#EFE4D8;color:#765F50;font-size:14px;font-weight:550}
+.specPill{background:#F4EADF;color:#8A6C59}
+.recordNutrients{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:16px 0 12px;padding:12px 10px;border-radius:12px;background:#FBF5EE}
+.recordNutrient{display:flex;flex-direction:column;gap:4px;min-width:0}
+.recordNutrient b{font-size:12px;font-weight:550;color:#8A7769;white-space:nowrap}
+.recordNutrient em{font-size:14px;font-style:normal;font-weight:650;color:#5E4B40;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.recordNutrientMissing em{color:#AA998C;font-weight:500}
+.recordFooter{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.recordFooter .sourceHint{margin:0;font-size:13px;color:#907D6F}
+.recordAction{display:inline-flex;align-items:center;gap:3px;color:#956A52;font-size:13px;font-weight:600;white-space:nowrap}
+@media(max-width:600px){
+ .recordNutrients{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 8px;margin-top:14px}
+ .recordNutrient b{font-size:12px}.recordNutrient em{font-size:14px}
+ .recordHeading h3{font-size:18px}.volumePill,.specPill{font-size:14px}
+}
+@media(max-width:360px){.recordNutrients{grid-template-columns:repeat(2,minmax(0,1fr))}.recordAction{font-size:12px}}

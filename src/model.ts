@@ -59,7 +59,7 @@ export interface Settings {
 }
 export const defaultSettings: Settings = { id: 'main', water: 1600, caffeine: 400, sugar: 50, onboarded: false };
 export const metricInfo: Record<Metric, { label: string; unit: string }> = {
-  water: { label: '白水', unit: 'ml' }, caffeine: { label: '咖啡因', unit: 'mg' },
+  water: { label: '水', unit: 'ml' }, caffeine: { label: '咖啡因', unit: 'mg' },
   sugar: { label: '饮品总糖', unit: 'g' }, protein: { label: '蛋白质', unit: 'g' },
   calories: { label: '热量', unit: 'kcal' }, alcohol: { label: '纯酒精', unit: 'g' },
 };

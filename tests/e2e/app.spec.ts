@@ -308,3 +308,33 @@ for (const origin of ['/', '/records']) {
     await expect(page).toHaveURL(new RegExp(`${origin === '/' ? '/' : '/records'}$`));
   });
 }
+
+test('bundled Chinese font loads and supporting text stays readable on phones', async ({ page }, testInfo) => {
+  const fontRequests: string[] = [];
+  page.on('response', response => {
+    if (response.url().includes('.woff2') && response.ok()) fontRequests.push(response.url());
+  });
+  await start(page);
+  for (const route of ['/', '/stats', '/profile', '/records', '/add']) {
+    await page.goto(route);
+    await page.locator('h1').waitFor();
+    await page.evaluate(() => document.fonts.ready);
+    expect(await page.evaluate(() => document.fonts.check('500 16px "Noto Sans SC Variable"', '今日摄入白水咖啡因饮品总糖'))).toBeTruthy();
+    await expect(page.locator('body')).toHaveCSS('font-weight', '500');
+    await expect(page.locator('body')).toHaveCSS('font-family', /Noto Sans SC Variable/);
+    const smallText = page.locator('main p, main small').filter({ visible: true });
+    const sizes = await smallText.evaluateAll(nodes => nodes.map(el => parseFloat(getComputedStyle(el).fontSize)));
+    expect(sizes.every(size => size >= 15)).toBeTruthy();
+    if (route === '/profile') {
+      await expect(page.getByRole('link', { name: /饮品管理/ }).locator('strong')).toHaveCSS('font-size', '18px');
+      await expect(page.getByRole('link', { name: /饮品管理/ }).locator('strong')).toHaveCSS('font-weight', '650');
+    }
+    await noOverflow(page);
+    await page.screenshot({ path: testInfo.outputPath(`font-${route.replaceAll('/', '') || 'today'}.png`), fullPage: true });
+    await page.setViewportSize({ width: 320, height: 720 });
+    await noOverflow(page);
+    await page.setViewportSize({ width: 390, height: 844 });
+  }
+  expect(fontRequests.length).toBeGreaterThan(0);
+  expect(fontRequests.every(url => new URL(url).origin === 'http://127.0.0.1:4173')).toBeTruthy();
+});

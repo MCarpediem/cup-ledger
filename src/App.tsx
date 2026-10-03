@@ -1,7 +1,7 @@
 import { Component, Suspense, type ReactNode } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link, NavLink, Route, Routes, useLocation, useParams, useSearchParams } from 'react-router-dom';
-import { BookOpen, ChartNoAxesCombined, CupSoda, House, UserRound } from 'lucide-react';
+import { BookOpen, ChartNoAxesCombined, CupSoda, CalendarDays, UserRound } from 'lucide-react';
 import { readData } from './db';
 import { DataContext, useData } from './components';
 import { DrinkForm } from './DrinkForm';
@@ -27,7 +27,7 @@ function Ledger() {
     <Route path="/add" element={<PickerRoute />} /><Route path="/add/:id" element={<FormRoute />} /><Route path="/record/:id" element={<FormRoute editing />} />
     <Route path="/templates" element={<Templates />} /><Route path="/templates/:id" element={<FormRoute templateMode />} />
     <Route path="/goals" element={<Goals initial={data.settings} />} /><Route path="*" element={<Missing />} />
-  </Routes></Suspense></main>{mainPage && <nav className={styles.nav} aria-label="主导航">{[{ to: '/', label: '今日', icon: House }, { to: '/records', label: '记录', icon: BookOpen }, { to: '/stats', label: '统计', icon: ChartNoAxesCombined }, { to: '/profile', label: '我的', icon: UserRound }].map(item => <NavLink key={item.to} to={item.to} end className={({ isActive }) => isActive ? styles.navActive : ''}><item.icon size={21} strokeWidth={1.7} /><span>{item.label}</span></NavLink>)}</nav>}</div></DataContext.Provider>;
+  </Routes></Suspense></main>{mainPage && <nav className={styles.nav} aria-label="主导航">{[{ to: '/', label: '今日', icon: CalendarDays }, { to: '/records', label: '记录', icon: BookOpen }, { to: '/stats', label: '统计', icon: ChartNoAxesCombined }, { to: '/profile', label: '我的', icon: UserRound }].map(item => <NavLink key={item.to} to={item.to} end className={({ isActive }) => isActive ? styles.navActive : ''}><item.icon size={21} strokeWidth={1.7} /><span>{item.label}</span></NavLink>)}</nav>}</div></DataContext.Provider>;
 }
 function PickerRoute() { const [query] = useSearchParams(); return <DrinkPicker editId={query.get('edit')} />; }
 function FormRoute({ editing = false, templateMode = false }: { editing?: boolean; templateMode?: boolean }) {

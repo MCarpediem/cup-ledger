@@ -9,6 +9,7 @@ import { aggregate, pretty } from './domain';
 import { categoryIds, type Category, type Settings } from './model';
 import { AddButton, BackHeader, Badge, Empty, ErrorMessage, Header, MetricSummary, RecordList, SectionTitle, errorText, useData, useToday } from './components';
 import styles from './App.module.css';
+import { HistoryFilters } from './HistoryFilters';
 
 export function Today() {
   const { records, settings } = useData();
@@ -32,7 +33,7 @@ export function History() {
   const days = [...new Set(filtered.map(r => r.dayKey))].sort().reverse();
   return <><Header title="每一杯的足迹" eyebrow="饮品日记 / RECORDS" action={<SlidersHorizontal size={23} />} />
     <section className={styles.historyOverview} aria-label="记录概览"><div><p>把喝过的每一杯，留在这里</p><div className={styles.historyNumbers}><span><strong>{records.length}</strong> 条记录</span><span><strong>{new Set(records.map(r => r.dayKey)).size}</strong> 个记录日</span></div></div><AddButton /></section>
-    <div className={styles.filters}><label>饮用日期<input aria-label="饮用日期筛选" type="date" value={date} onChange={e => setDate(e.target.value)} /></label><label>饮品类别<select aria-label="饮品类别筛选" value={category} onChange={e => setCategory(e.target.value as Category | '')}><option value="">全部类别</option>{categoryIds.map(id => <option key={id} value={id}>{categories[id].name}</option>)}</select></label></div>
+    <HistoryFilters date={date} onDateChange={setDate} category={category} onCategoryChange={setCategory} records={records} />
     {(date || category) && <button className={styles.textButton} onClick={() => { setDate(''); setCategory(''); }}>清除筛选</button>}
     <p className={styles.footnote}>共 {filtered.length} 条记录 · 点击任意记录可编辑或删除</p>
     {days.length ? days.map(day => <section key={day}><SectionTitle title={format(parseISO(day), 'M 月 d 日 · EEEE', { locale: zhCN })}><span className={styles.muted}>{filtered.filter(r => r.dayKey === day).length} 条</span></SectionTitle><RecordList records={filtered.filter(r => r.dayKey === day)} /></section>) : <Empty showAdd={false} title="还没有找到记录" description={records.length ? "换个日期或类别，找回那一杯。" : "记下第一杯后，这里会按日期整理你的饮品、容量与成分。"} />}

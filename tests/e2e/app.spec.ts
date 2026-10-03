@@ -9,6 +9,7 @@ async function start(page: Page) {
 async function choose(page: Page, name: string) {
   await page.getByRole('link', { name: '添加饮品', exact: true }).last().click();
   await page.getByRole('textbox', { name: '搜索饮品' }).fill(name);
+  await page.evaluate(() => document.fonts.ready);
   await page.getByRole('link').filter({ has: page.getByRole('heading', { name, exact: true }) }).click();
   await expect(page.getByRole('heading', { name: '记录这一杯' })).toBeVisible();
 }
@@ -57,7 +58,8 @@ test('first use, search, configure, save, move to another day, and delete stay c
   await expect(page.getByRole('progressbar', { name: '咖啡因', exact: true })).toHaveAttribute('aria-valuenow', '0');
   await page.getByRole('link', { name: '记录', exact: true }).click();
   await page.getByLabel('饮用日期筛选').fill('2026-09-28');
-  await page.getByLabel('饮品类别筛选').selectOption('coffee');
+  await page.getByRole('button', { name: /饮品类别筛选/ }).click();
+  await page.getByRole('dialog').getByRole('button', { name: '咖啡', exact: true }).click();
   await expect(page.getByRole('link', { name: '编辑 美式咖啡' })).toHaveCount(1);
   await page.getByRole('link', { name: '编辑 美式咖啡' }).click();
   page.once('dialog', dialog => dialog.accept());
@@ -295,6 +297,8 @@ for (const origin of ['/', '/records']) {
     await page.reload();
     await page.getByRole('link', { name: '返回', exact: true }).click();
     await expect(page).toHaveURL(pickerUrl);
+    await page.getByRole('heading', { name: '选择一杯饮品' }).waitFor();
+    await page.evaluate(() => document.fonts.ready);
     await page.getByRole('link', { name: '返回', exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`${origin === '/' ? '/' : '/records'}$`));
     await page.getByRole('link', { name: '添加饮品', exact: true }).click();
@@ -319,7 +323,10 @@ test('bundled Chinese font loads and supporting text stays readable on phones', 
     await page.goto(route);
     await page.locator('h1').waitFor();
     await page.evaluate(() => document.fonts.ready);
-    expect(await page.evaluate(() => document.fonts.check('500 16px "Noto Sans SC Variable"', '今日摄入白水咖啡因饮品总糖'))).toBeTruthy();
+    expect(await page.locator('h1').evaluate(el => {
+      const style = getComputedStyle(el);
+      return document.fonts.check(`${style.fontWeight} ${style.fontSize} ${style.fontFamily}`, el.textContent ?? '');
+    })).toBeTruthy();
     await expect(page.locator('body')).toHaveCSS('font-weight', '500');
     await expect(page.locator('body')).toHaveCSS('font-family', /Noto Sans SC Variable/);
     const smallText = page.locator('main p, main small').filter({ visible: true });
@@ -337,4 +344,82 @@ test('bundled Chinese font loads and supporting text stays readable on phones', 
   }
   expect(fontRequests.length).toBeGreaterThan(0);
   expect(fontRequests.every(url => new URL(url).origin === 'http://127.0.0.1:4173')).toBeTruthy();
+});
+
+test('date filter shows its placeholder and selected date independently of native mobile rendering', async ({ page }, testInfo) => {
+  await start(page); await seed(page);
+  await page.getByRole('link', { name: '记录', exact: true }).click();
+  const display = page.getByTestId('date-display');
+  const input = page.getByLabel('饮用日期筛选');
+  await expect(display).toHaveText('年 / 月 / 日');
+  await expect(display).toBeVisible();
+  await input.fill('2026-09-29');
+  await expect(display).toHaveText('2026/09/29');
+  await expect(page.getByRole('link', { name: /^编辑 / })).toHaveCount(5);
+  await input.fill('2026-09-28');
+  await expect(display).toHaveText('2026/09/28');
+  await expect(page.getByRole('link', { name: /^编辑 / })).toHaveCount(0);
+  await page.getByRole('button', { name: '清除筛选' }).click();
+  await expect(input).toHaveValue('');
+  await expect(display).toHaveText('年 / 月 / 日');
+  await expect(page.getByRole('link', { name: /^编辑 / })).toHaveCount(5);
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({ path: testInfo.outputPath('record-filters.png'), fullPage: true });
+  await page.setViewportSize({ width: 320, height: 720 });
+  await noOverflow(page);
+});
+
+test('category sheet filters by selection, shows active state and restores focus on dismissal', async ({ page }, testInfo) => {
+  await start(page); await seed(page);
+  await page.getByRole('link', { name: '记录', exact: true }).click();
+  const trigger = page.getByRole('button', { name: /饮品类别筛选/ });
+  const dialog = page.getByRole('dialog', { name: '想回看哪一类？' });
+  await trigger.click();
+  await expect(dialog).toBeVisible();
+  await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+  await expect(dialog.getByRole('button', { name: '全部类别', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(dialog.getByRole('button', { name: '咖啡', exact: true })).toContainText('2 条记录');
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({ path: testInfo.outputPath('category-sheet.png') });
+  await dialog.getByRole('button', { name: '咖啡', exact: true }).click();
+  await expect(dialog).not.toBeVisible();
+  await expect(trigger).toBeFocused();
+  await expect(trigger).toContainText('咖啡');
+  await expect(page.getByRole('link', { name: /^编辑 / })).toHaveCount(2);
+  await trigger.click();
+  await expect(dialog.getByRole('button', { name: '咖啡', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await page.keyboard.press('Escape');
+  await expect(dialog).not.toBeVisible();
+  await expect(trigger).toBeFocused();
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  await page.setViewportSize({ width: 320, height: 720 });
+  await trigger.click();
+  await noOverflow(page);
+  await dialog.getByRole('button', { name: '其他种类', exact: true }).click();
+  await expect(page.getByRole('link', { name: /^编辑 / })).toHaveCount(0);
+  await trigger.click();
+  await dialog.getByRole('button', { name: '全部类别', exact: true }).click();
+  await expect(page.getByRole('link', { name: /^编辑 / })).toHaveCount(5);
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await trigger.click();
+  await dialog.getByRole('button', { name: '关闭类别选择' }).click();
+  await expect(trigger).toBeFocused();
+});
+
+test('measurement colors are warm and statistics align centrally across periods', async ({ page }, testInfo) => {
+  await start(page);
+  await expect(page.getByRole('link', { name: '今日', exact: true }).locator('svg')).toHaveClass(/lucide-calendar-days/);
+  const daily = page.getByRole('region', { name: '摄入指标' });
+  await expect(daily.getByText('白水', { exact: true })).toHaveCSS('color', 'rgb(125, 105, 91)');
+  await page.getByRole('link', { name: '统计', exact: true }).click();
+  const metrics = page.getByRole('group', { name: '周期摄入指标' });
+  for (const period of ['周', '月', '年']) {
+    await page.getByRole('button', { name: period, exact: true }).click();
+    await expect(metrics).toHaveCSS('text-align', 'center');
+    await expect(metrics.locator('p').first()).toHaveCSS('color', 'rgb(120, 96, 79)');
+    await expect(metrics.locator(':scope > div')).toHaveCount(6);
+    await noOverflow(page);
+  }
+  await page.evaluate(() => document.fonts.ready);
+  await metrics.screenshot({ path: testInfo.outputPath('centered-metrics.png') });
 });

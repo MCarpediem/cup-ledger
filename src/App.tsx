@@ -34,9 +34,9 @@ function FormRoute({ editing = false, templateMode = false }: { editing?: boolea
   const { id } = useParams();
   const [query] = useSearchParams();
   const { records, templates } = useData();
-  const record = records.find(r => r.id === (editing ? id : query.get('edit')));
+  const record = templateMode ? undefined : records.find(r => r.id === (editing ? id : query.get('edit')));
   const template = templates.find(t => t.id === (editing ? record?.templateId : id));
-  if (editing && !record || !editing && !template && !(templateMode && id === 'new') || query.get('edit') && !record) return <Missing />;
+  if (editing && !record || !editing && !template && !(templateMode && id === 'new') || !templateMode && query.get('edit') && !record) return <Missing />;
   return <DrinkForm key={`${id}-${editing}-${templateMode}`} record={record} template={template} templateMode={templateMode} reselected={!editing && !!record} />;
 }
 function Missing() { return <div className={styles.empty}><h1>这页已经不在这里了</h1><p>饮品或记录可能已被删除。</p><Link to="/" className={styles.primary}>返回今日</Link></div>; }

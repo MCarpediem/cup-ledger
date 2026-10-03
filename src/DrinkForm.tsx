@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Check, ChevronRight, GlassWater, Minus, Plus, Wine } from 'lucide-react';
 import { categories } from './catalog';
 import { db, saveRecord } from './db';
@@ -12,6 +12,12 @@ const editableNutrients = ['caffeine', 'sugar', 'protein', 'calories'] as const;
 const containers = [{ name: '小杯', ml: 150 }, { name: '玻璃杯', ml: 250 }, { name: '易拉罐', ml: 330 }, { name: '马克杯', ml: 350 }, { name: '中杯 / 瓶装', ml: 500 }, { name: '大杯', ml: 700 }];
 export function DrinkForm({ template, record, templateMode = false, reselected = false }: { template?: Beverage; record?: DrinkRecord; templateMode?: boolean; reselected?: boolean }) {
   const navigate = useNavigate();
+  const [query] = useSearchParams();
+  const flowQuery = new URLSearchParams();
+  if (query.get('from') === 'records') flowQuery.set('from', 'records');
+  if (record?.id || query.get('edit')) flowQuery.set('edit', record?.id ?? query.get('edit')!);
+  const pickerPath = `/add${flowQuery.size ? `?${flowQuery}` : ''}`;
+  const templateReturn = query.get('via') === 'add' ? pickerPath : '/templates';
   const snapshot = record && !reselected && !templateMode ? record : undefined;
   const [name, setName] = useState(snapshot?.name ?? template?.name ?? '');
   const [category, setCategory] = useState<Category>(snapshot?.category ?? template?.category ?? 'coffee');
@@ -74,7 +80,7 @@ export function DrinkForm({ template, record, templateMode = false, reselected =
       if (templateMode) {
         validateRecord(draft);
         await db.templates.put(nextTemplate);
-        navigate('/templates');
+        navigate(templateReturn);
       } else {
         await saveRecord(draft, dirty && updateDefault && template ? nextTemplate : undefined);
         navigate('/', { state: { saved: true } });
@@ -87,12 +93,12 @@ export function DrinkForm({ template, record, templateMode = false, reselected =
     try {
       if (templateMode && template?.custom) await db.templates.delete(template.id);
       else if (record) await db.records.delete(record.id);
-      navigate(templateMode ? '/templates' : '/records');
+      navigate(templateMode ? templateReturn : '/records');
     } catch (e) { setError(errorText(e)); } finally { setBusy(false); }
   }
-  return <><BackHeader title={templateMode ? template ? '编辑饮品默认值' : '创建自定义饮品' : record ? '编辑饮品记录' : '记录这一杯'} to={templateMode ? '/templates' : record ? '/records' : '/add'} />
+  return <><BackHeader title={templateMode ? template ? '编辑饮品默认值' : '创建自定义饮品' : record ? '编辑饮品记录' : '记录这一杯'} to={templateMode ? templateReturn : record ? '/records' : pickerPath} />
     <form onSubmit={submit} className={styles.form}>
-      {templateMode ? <section className={styles.formSection}><h2>饮品信息</h2><label>饮品名称<input aria-label="饮品名称" required maxLength={60} value={name} onChange={e => setName(e.target.value)} readOnly={!!template && !template.custom} /></label><label>类别<select value={category} disabled={!!template && !template.custom} onChange={e => { setCategory(e.target.value as Category); setPlainWater(false); }}>{categoryIds.map(id => <option key={id} value={id}>{categories[id].name}</option>)}</select></label>{category === 'water' && <label className={styles.checkbox}><input type="checkbox" checked={plainWater} disabled={!!template && !template.custom} onChange={e => setPlainWater(e.target.checked)} />普通饮用水、矿泉水或纯净水（计入白水）</label>}</section> : <div className={styles.selectedDrink}><Badge category={category} /><div><h2>{name}</h2><p>{categories[category].name} · {plainWater ? '计入白水目标' : '不计入白水目标'}</p></div><Link to={`/add${record ? `?edit=${record.id}` : ''}`} aria-label="更换饮品"><ChevronRight size={21} /></Link></div>}
+      {templateMode ? <section className={styles.formSection}><h2>饮品信息</h2><label>饮品名称<input aria-label="饮品名称" required maxLength={60} value={name} onChange={e => setName(e.target.value)} readOnly={!!template && !template.custom} /></label><label>类别<select value={category} disabled={!!template && !template.custom} onChange={e => { setCategory(e.target.value as Category); setPlainWater(false); }}>{categoryIds.map(id => <option key={id} value={id}>{categories[id].name}</option>)}</select></label>{category === 'water' && <label className={styles.checkbox}><input type="checkbox" checked={plainWater} disabled={!!template && !template.custom} onChange={e => setPlainWater(e.target.checked)} />普通饮用水、矿泉水或纯净水（计入白水）</label>}</section> : <div className={styles.selectedDrink}><Badge category={category} /><div><h2>{name}</h2><p>{categories[category].name} · {plainWater ? '计入白水目标' : '不计入白水目标'}</p></div><Link to={pickerPath} aria-label="更换饮品"><ChevronRight size={21} /></Link></div>}
       {(variantsAvailable || sweetAvailable || specification) && <section className={styles.formSection}><h2>适用规格</h2>{variantsAvailable && <label>饮品类型<select value={variantId} onChange={e => { setVariantId(e.target.value); applySpecification(e.target.value, sweetness); }}><option value="">当前默认配方</option>{template!.variants!.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>}{sweetAvailable && <label>甜度<select value={sweetness} onChange={e => { setSweetness(e.target.value); applySpecification(variantId, e.target.value); }}><option value="1">标准甜</option><option value="0.5">半糖</option><option value="0">不额外加糖</option></select></label>}{snapshot && specification && <p className={styles.footnote}>原记录规格：{specification}。更换饮品可重新选择规格；下方可以直接调整成分。</p>}</section>}
       <section className={styles.formSection}><div className={styles.sectionTitle}><h2>{templateMode ? '默认容量' : '这一杯，有多少？'}</h2><span className={styles.muted}>单份容量</span></div><div className={styles.containers}>{containers.map(item => <button type="button" key={item.ml} aria-pressed={volume === item.ml} onClick={() => changeVolume(item.ml)}><GlassWater size={24} strokeWidth={1.3} /><strong>{item.name}</strong><span>{item.ml} ml</span></button>)}</div><label className={styles.inlineField}><span>准确容量 <small>ml</small></span><input aria-label="准确容量" type="number" required min="1" max="10000" step="any" value={volume || ''} onChange={e => changeVolume(Number(e.target.value))} /></label>
       {!templateMode && <><div className={styles.quantity}><label htmlFor="quantity">数量 <small>杯 / 瓶 / 份</small></label><div><button type="button" aria-label="减少份数" disabled={quantity <= 1} onClick={() => setQuantity(quantity - 1)}><Minus size={18} /></button><input id="quantity" aria-label="份数" type="number" min="1" max="100" required value={quantity || ''} onChange={e => setQuantity(Number(e.target.value))} /><button type="button" aria-label="增加份数" disabled={quantity >= 100} onClick={() => setQuantity(quantity + 1)}><Plus size={18} /></button></div></div><label>饮用时间<input aria-label="饮用时间" type="datetime-local" value={time} required max={localInputTime()} onChange={e => setTime(e.target.value)} /></label></>}

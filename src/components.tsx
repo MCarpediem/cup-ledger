@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { ArrowLeft, ArrowUpRight, Coffee, Plus } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { categories } from './catalog';
 import { aggregate, dayKey, pretty, referenceState, type Totals } from './domain';
@@ -31,10 +31,11 @@ export function BackHeader({ title, to = '/' }: { title: string; to?: string }) 
   return <header className={styles.backHeader}><Link to={to} className={styles.iconButton} aria-label="返回"><ArrowLeft size={22} /></Link><h1>{title}</h1><span className={styles.wordmark}>杯记</span></header>;
 }
 export function AddButton({ compact = false }: { compact?: boolean }) {
-  return <Link to="/add" className={compact ? styles.primary : styles.addButton}><Plus size={20} />添加饮品</Link>;
+  const { pathname } = useLocation();
+  return <Link to={pathname === '/records' ? '/add?from=records' : '/add'} className={styles.primary} data-compact={compact}><Plus size={20} />添加饮品</Link>;
 }
-export function Empty({ title = '这一页，等一杯饮品', description = '从一杯水开始，记下今天的小日常。' }: { title?: string; description?: string }) {
-  return <div className={styles.empty}><div className={styles.emptyIcon}><Coffee size={32} strokeWidth={1.3} /></div><h3>{title}</h3><p>{description}</p><AddButton compact /></div>;
+export function Empty({ title = '这一页，等一杯饮品', description = '从一杯水开始，记下今天的小日常。', showAdd = true }: { title?: string; description?: string; showAdd?: boolean }) {
+  return <div className={styles.empty}><div className={styles.emptyIcon}><Coffee size={32} strokeWidth={1.3} /></div><h3>{title}</h3><p>{description}</p>{showAdd && <AddButton compact />}</div>;
 }
 export function MetricSummary({ totals, settings }: { totals: Totals; settings: Settings }) {
   return <section aria-label="摄入指标" className={styles.metrics}>

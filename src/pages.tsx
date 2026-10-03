@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { ArrowRight, ChevronRight, CupSoda, Leaf, Search, Settings2, ShieldCheck, SlidersHorizontal, Trash2 } from 'lucide-react';
@@ -17,11 +17,11 @@ export function Today() {
   const totalVolume = daily.reduce((sum, r) => sum + r.volume * r.quantity, 0);
   return <><Header title="今天，喝了些什么？" eyebrow={format(parseISO(today), 'yyyy 年 M 月 d 日 · EEEE', { locale: zhCN })} action={<span className={styles.headerIcon}><Leaf size={25} strokeWidth={1.4} /></span>} />
     <section className={styles.hero}><div><span className={styles.eyebrow}>MY DAILY SIPS</span><h2>一杯一记，<br />把日常慢慢收藏。</h2><p>今天已记录 <strong>{daily.reduce((sum, r) => sum + r.quantity, 0)}</strong> 份饮品 <span>·</span> {pretty(totalVolume)} ml</p></div><div className={styles.cupIllustration} aria-hidden="true"><svg viewBox="0 0 160 170"><path d="M55 45c-18-20 21-21 5-41M81 43c-16-15 17-22 7-35" fill="none" stroke="#cdb7a1" strokeWidth="3" strokeLinecap="round"/><ellipse cx="78" cy="144" rx="65" ry="10" fill="#e4d5c2"/><path d="M109 68h12c40 0 34 48-7 48" fill="none" stroke="#b48b70" strokeWidth="12"/><path d="M27 61h91l-8 63c-4 25-64 25-70 0z" fill="#e6c9ac"/><path d="M29 64h87l-3 18H33z" fill="#f2ddc6"/><ellipse cx="72" cy="62" rx="45" ry="10" fill="#bf9878"/><ellipse cx="72" cy="63" rx="36" ry="6" fill="#785542"/><path d="M48 88l4 32" stroke="#f5e5d2" strokeWidth="7" strokeLinecap="round"/></svg></div></section>
+    <div className={styles.primaryEntry}><AddButton /></div>
     <SectionTitle title="今日摄入"><span className={styles.muted}>每一杯，都算数</span></SectionTitle>
     <MetricSummary totals={aggregate(daily)} settings={settings} />
     <p className={styles.footnote}>仅统计已记录的饮品；总糖包含天然糖，参考线是个人提醒值。</p>
-    <SectionTitle title="最近记录" to="/records" />{daily.length ? <RecordList records={daily.slice(0, 5)} /> : <Empty />}
-    <AddButton />
+    <SectionTitle title="最近记录" to="/records" />{daily.length ? <RecordList records={daily.slice(0, 5)} /> : <Empty showAdd={false} />}
   </>;
 }
 export function History() {
@@ -31,23 +31,30 @@ export function History() {
   const filtered = records.filter(r => (!date || r.dayKey === date) && (!category || r.category === category));
   const days = [...new Set(filtered.map(r => r.dayKey))].sort().reverse();
   return <><Header title="每一杯的足迹" eyebrow="饮品日记 / RECORDS" action={<SlidersHorizontal size={23} />} />
+    <section className={styles.historyOverview} aria-label="记录概览"><div><p>把喝过的每一杯，留在这里</p><div className={styles.historyNumbers}><span><strong>{records.length}</strong> 条记录</span><span><strong>{new Set(records.map(r => r.dayKey)).size}</strong> 个记录日</span></div></div><AddButton /></section>
     <div className={styles.filters}><label>饮用日期<input aria-label="饮用日期筛选" type="date" value={date} onChange={e => setDate(e.target.value)} /></label><label>饮品类别<select aria-label="饮品类别筛选" value={category} onChange={e => setCategory(e.target.value as Category | '')}><option value="">全部类别</option>{categoryIds.map(id => <option key={id} value={id}>{categories[id].name}</option>)}</select></label></div>
     {(date || category) && <button className={styles.textButton} onClick={() => { setDate(''); setCategory(''); }}>清除筛选</button>}
     <p className={styles.footnote}>共 {filtered.length} 条记录 · 点击任意记录可编辑或删除</p>
-    {days.length ? days.map(day => <section key={day}><SectionTitle title={format(parseISO(day), 'M 月 d 日 · EEEE', { locale: zhCN })}><span className={styles.muted}>{filtered.filter(r => r.dayKey === day).length} 条</span></SectionTitle><RecordList records={filtered.filter(r => r.dayKey === day)} /></section>) : <Empty title="还没有找到记录" description="换个日期或类别，或记下新的一杯。" />}<AddButton />
+    {days.length ? days.map(day => <section key={day}><SectionTitle title={format(parseISO(day), 'M 月 d 日 · EEEE', { locale: zhCN })}><span className={styles.muted}>{filtered.filter(r => r.dayKey === day).length} 条</span></SectionTitle><RecordList records={filtered.filter(r => r.dayKey === day)} /></section>) : <Empty showAdd={false} title="还没有找到记录" description={records.length ? "换个日期或类别，找回那一杯。" : "记下第一杯后，这里会按日期整理你的饮品、容量与成分。"} />}
   </>;
 }
 export function DrinkPicker({ editId }: { editId?: string | null }) {
   const { templates } = useData();
+  const [query] = useSearchParams();
+  const flowQuery = new URLSearchParams();
+  if (query.get('from') === 'records') flowQuery.set('from', 'records');
+  if (editId) flowQuery.set('edit', editId);
+  const suffix = flowQuery.size ? `?${flowQuery}` : '';
+  const customPath = `/templates/new?${new URLSearchParams({ ...Object.fromEntries(flowQuery), via: 'add' })}`;
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<Category | ''>('');
   const filtered = templates.filter(item => (!category || item.category === category) && `${item.name}${categories[item.category].name}`.toLowerCase().includes(search.trim().toLowerCase()));
-  return <><BackHeader title="选择一杯饮品" to={editId ? `/record/${editId}` : '/'} />
+  return <><BackHeader title="选择一杯饮品" to={editId ? `/record/${editId}` : query.get('from') === 'records' ? '/records' : '/'} />
     <div className={styles.search}><Search size={20} /><input aria-label="搜索饮品" placeholder="搜索饮品，比如：拿铁、绿茶" value={search} onChange={e => setSearch(e.target.value)} /></div>
     <div className={styles.chips} role="group" aria-label="选择饮品类别"><button aria-pressed={!category} onClick={() => setCategory('')}>全部</button>{categoryIds.map(id => <button key={id} aria-pressed={category === id} onClick={() => setCategory(id)}>{categories[id].icon} {categories[id].name}</button>)}</div>
-    <div className={styles.pickerNote}><span>选一杯，记录此刻</span><Link to="/templates/new">自定义饮品 +</Link></div>
-    {categoryIds.filter(id => filtered.some(item => item.category === id)).map(id => <section key={id}><SectionTitle title={categories[id].name} /><div className={styles.drinkGrid}>{filtered.filter(item => item.category === id).map(item => <Link className={styles.drinkOption} key={item.id} to={`/add/${item.id}${editId ? `?edit=${editId}` : ''}`}><Badge category={id} /><div><h3>{item.name}</h3><p>{item.volume} ml · {item.custom ? '自定义' : '预设估算'}</p></div><ChevronRight size={17} /></Link>)}</div></section>)}
-    {!filtered.length && <div className={styles.empty}><h3>没有找到这杯饮品</h3><p>试试其他关键词，或创建自己的配方。</p><Link className={styles.primary} to="/templates/new">创建自定义饮品</Link></div>}
+    <div className={styles.pickerNote}><span>选一杯，记录此刻</span><Link to={customPath}>自定义饮品 +</Link></div>
+    {categoryIds.filter(id => filtered.some(item => item.category === id)).map(id => <section key={id}><SectionTitle title={categories[id].name} /><div className={styles.drinkGrid}>{filtered.filter(item => item.category === id).map(item => <Link className={styles.drinkOption} key={item.id} to={`/add/${item.id}${suffix}`}><Badge category={id} /><div><h3>{item.name}</h3><p>{item.volume} ml · {item.custom ? '自定义' : '预设估算'}</p></div><ChevronRight size={17} /></Link>)}</div></section>)}
+    {!filtered.length && <div className={styles.empty}><h3>没有找到这杯饮品</h3><p>试试其他关键词，或创建自己的配方。</p><Link className={styles.primary} to={customPath}>创建自定义饮品</Link></div>}
   </>;
 }
 export function Goals({ initial, onboarding = false }: { initial: Settings; onboarding?: boolean }) {

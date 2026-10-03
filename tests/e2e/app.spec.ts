@@ -9,7 +9,7 @@ async function start(page: Page) {
 async function choose(page: Page, name: string) {
   await page.getByRole('link', { name: '添加饮品', exact: true }).last().click();
   await page.getByRole('textbox', { name: '搜索饮品' }).fill(name);
-  await page.getByRole('link', { name: new RegExp(name) }).click();
+  await page.getByRole('link').filter({ has: page.getByRole('heading', { name, exact: true }) }).click();
   await expect(page.getByRole('heading', { name: '记录这一杯' })).toBeVisible();
 }
 async function save(page: Page) {
@@ -25,7 +25,7 @@ async function seed(page: Page) {
     await new Promise<void>((resolve, reject) => {
       const tx = db.transaction('records', 'readwrite');
       const items = [
-        { name: '普通饮用水', typeId: 'water-plain', category: 'water', plainWater: true, volume: 250, caffeine: 0, sugar: 0, quantity: 3 },
+        { name: '水', typeId: 'water-plain', category: 'water', plainWater: true, volume: 250, caffeine: 0, sugar: 0, quantity: 3 },
         { name: '拿铁咖啡', typeId: 'coffee-latte', category: 'coffee', plainWater: false, volume: 300, caffeine: 80, sugar: 12, quantity: 1 },
         { name: '绿茶', typeId: 'tea-green', category: 'tea', plainWater: false, volume: 300, caffeine: 36, sugar: 0, quantity: 1 },
         { name: '橙汁', typeId: 'juice-orange', category: 'juice', plainWater: false, volume: 250, caffeine: 0, sugar: 20, quantity: 1 },
@@ -69,7 +69,7 @@ test('first use, search, configure, save, move to another day, and delete stay c
 test('plain water qualifies, sparkling water does not, and loaded app works offline', async ({ page, context }) => {
   await start(page);
   await context.setOffline(true);
-  await choose(page, '普通饮用水');
+  await choose(page, '水');
   await page.getByRole('spinbutton', { name: '准确容量', exact: true }).fill('500');
   await page.getByRole('spinbutton', { name: '份数', exact: true }).fill('2');
   await save(page);
@@ -104,10 +104,10 @@ test('custom drink editing and deletion preserve history and missing nutrition',
   await expect(page.getByRole('link', { name: `编辑 ${name}` })).toContainText('饮品总糖 20 g');
   await page.getByRole('link', { name: '我的', exact: true }).click();
   await page.getByRole('link', { name: /饮品管理/ }).click();
-  await page.getByRole('link', { name: new RegExp(name) }).click();
+  await page.getByRole('link').filter({ has: page.getByRole('heading', { name, exact: true }) }).click();
   await page.getByRole('spinbutton', { name: '饮品总糖', exact: true }).fill('12');
   await page.getByRole('button', { name: '保存饮品', exact: true }).click();
-  await page.getByRole('link', { name: new RegExp(name) }).click();
+  await page.getByRole('link').filter({ has: page.getByRole('heading', { name, exact: true }) }).click();
   page.once('dialog', dialog => dialog.accept());
   await page.getByRole('button', { name: '删除自定义饮品' }).click();
   await expect(page.getByRole('link', { name: new RegExp(name) })).toHaveCount(0);
@@ -165,13 +165,13 @@ test('week/month calendars deduplicate drinks, show overflow, and year has no ca
   await page.getByRole('button', { name: '年', exact: true }).click();
   await expect(page.getByRole('region', { name: /日历/ })).toHaveCount(0);
   await expect(page.getByText('日均按 272 个自然日计算，截至今天。')).toBeVisible();
-  await expect(page.getByRole('heading', { name: '普通饮用水', exact: true })).toHaveCount(2);
+  await expect(page.getByRole('heading', { name: '水', exact: true })).toHaveCount(2);
   await page.getByRole('button', { name: '上一个周期' }).click();
   await expect(page.getByText('日均按 365 个自然日计算，包含没有记录的日期。')).toBeVisible();
   await noOverflow(page);
 });
 test('all local data clearing requires two confirmations and resets onboarding', async ({ page }) => {
-  await start(page); await choose(page, '普通饮用水'); await save(page);
+  await start(page); await choose(page, '水'); await save(page);
   await page.getByRole('link', { name: '我的', exact: true }).click();
   await page.getByRole('button', { name: /清空本地数据/ }).click();
   await page.getByRole('button', { name: '保留数据' }).click();
@@ -182,7 +182,7 @@ test('all local data clearing requires two confirmations and resets onboarding',
   await expect(page.getByRole('heading', { name: '从今天的第一杯开始' })).toBeVisible();
   await page.reload();
   await page.getByRole('button', { name: '开始我的饮品日记' }).click();
-  await expect(page.getByRole('link', { name: '编辑 普通饮用水' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: '编辑 水' })).toHaveCount(0);
 });
 test('reference status uses text and today refreshes after midnight', async ({ page }) => {
   await start(page);
@@ -219,10 +219,10 @@ test('specifications, per-serving conversion, and sweetness update totals accura
 test('category colors stay consistent and narrow screens keep the last record reachable', async ({ page }, testInfo) => {
   await start(page);
   await page.setViewportSize({ width: 320, height: 720 });
-  await choose(page, '普通饮用水');
+  await choose(page, '水');
   const formColor = await page.locator('span[aria-hidden="true"]').first().evaluate(el => getComputedStyle(el).backgroundColor);
   await save(page);
-  const row = page.getByRole('link', { name: '编辑 普通饮用水' });
+  const row = page.getByRole('link', { name: '编辑 水' });
   const rowColor = await row.locator('span[aria-hidden="true"]').first().evaluate(el => getComputedStyle(el).backgroundColor);
   expect(rowColor).toBe(formColor);
   await noOverflow(page);
@@ -245,3 +245,66 @@ test('blank alcohol fields remain blank when editing a saved snapshot', async ({
   await expect(page.getByRole('spinbutton', { name: '酒精度 ABV', exact: true })).toBeEmpty();
   await expect(page.getByRole('spinbutton', { name: '单份纯酒精', exact: true })).toBeEmpty();
 });
+
+test('today and records keep one inline entry, with readable compact empty states', async ({ page }, testInfo) => {
+  await start(page);
+  for (const path of ['/', '/records']) {
+    await page.goto(path);
+    const entry = page.getByRole('link', { name: '添加饮品', exact: true });
+    await expect(entry).toHaveCount(1);
+    expect(await entry.evaluate(el => getComputedStyle(el).position)).not.toBe('fixed');
+    expect(await entry.evaluate(el => getComputedStyle(el).color)).toBe('rgb(255, 249, 242)');
+    if (path === '/records') await expect(page.getByRole('region', { name: '记录概览' })).toContainText('0 条记录');
+    await noOverflow(page);
+    await page.screenshot({ path: testInfo.outputPath(path === '/' ? 'today-empty.png' : 'records-empty.png'), fullPage: true });
+  }
+  await choose(page, '水'); await save(page);
+  await expect(page.getByRole('link', { name: '添加饮品', exact: true })).toHaveCount(1);
+  await page.goto('/records');
+  await expect(page.getByRole('region', { name: '记录概览' })).toContainText('1 条记录');
+  await expect(page.getByRole('link', { name: '添加饮品', exact: true })).toHaveCount(1);
+  const record = page.getByRole('link', { name: '编辑 水', exact: true });
+  const textStyle = await record.locator('p').last().evaluate(el => ({ size: parseFloat(getComputedStyle(el).fontSize), spacing: parseFloat(getComputedStyle(el).letterSpacing) }));
+  expect(textStyle.size).toBeGreaterThanOrEqual(13);
+  expect(textStyle.spacing).toBeGreaterThan(0);
+  await page.setViewportSize({ width: 320, height: 720 });
+  await noOverflow(page);
+});
+
+test('picker shows the requested category order and beverage options', async ({ page }, testInfo) => {
+  await start(page);
+  await page.getByRole('link', { name: '添加饮品', exact: true }).click();
+  await expect(page.locator('main section h2')).toHaveText(['水', '茶', '咖啡', '奶茶', '果汁', '牛奶', '碳酸饮料', '能量饮料', '运动饮料', '酒精饮品', '其他种类']);
+  const choices = (category: string) => page.locator('main section').filter({ has: page.getByRole('heading', { name: category, exact: true }) }).locator('h3');
+  await expect(choices('水')).toHaveText(['水']);
+  await expect(choices('牛奶')).toHaveText(['全脂牛奶', '低脂牛奶', '脱脂牛奶']);
+  await expect(choices('碳酸饮料')).toHaveText(['可乐', '无糖可乐', '雪碧', '芬达橙味']);
+  await expect(page.getByRole('heading', { name: '摩卡', exact: true })).toHaveCount(1);
+  await expect(page.getByRole('heading', { name: '澳白', exact: true })).toHaveCount(1);
+  await noOverflow(page);
+  await page.screenshot({ path: testInfo.outputPath('picker.png'), fullPage: true });
+});
+
+for (const origin of ['/', '/records']) {
+  test(`custom drink cancel and save preserve the add flow from ${origin}`, async ({ page }) => {
+    await start(page);
+    await page.goto(origin);
+    await page.getByRole('link', { name: '添加饮品', exact: true }).click();
+    const pickerUrl = page.url();
+    await page.getByRole('link', { name: '自定义饮品 +' }).click();
+    await page.reload();
+    await page.getByRole('link', { name: '返回', exact: true }).click();
+    await expect(page).toHaveURL(pickerUrl);
+    await page.getByRole('link', { name: '返回', exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`${origin === '/' ? '/' : '/records'}$`));
+    await page.getByRole('link', { name: '添加饮品', exact: true }).click();
+    await page.getByRole('textbox', { name: '搜索饮品' }).fill('尚未收录的饮品');
+    await page.getByRole('link', { name: '创建自定义饮品', exact: true }).click();
+    await page.getByRole('textbox', { name: '饮品名称' }).fill('我的新饮品');
+    await page.getByRole('button', { name: '保存饮品', exact: true }).click();
+    await expect(page).toHaveURL(pickerUrl);
+    await expect(page.getByRole('heading', { name: '我的新饮品', exact: true })).toBeVisible();
+    await page.getByRole('link', { name: '返回', exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`${origin === '/' ? '/' : '/records'}$`));
+  });
+}

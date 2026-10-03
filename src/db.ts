@@ -15,7 +15,12 @@ export class LedgerDB extends Dexie {
 export const db = new LedgerDB();
 export function mergedCatalog(overrides: Beverage[]) {
   const map = new Map(catalog.map(item => [item.id, item]));
-  overrides.forEach(item => map.set(item.id, item));
+  overrides.forEach(item => {
+    const builtin = map.get(item.id);
+    if (item.custom) map.set(item.id, item);
+    else if (builtin) map.set(item.id, { ...item, name: builtin.name, category: builtin.category, plainWater: builtin.plainWater });
+    // Retired builtin overrides remain stored, but do not reappear in the picker.
+  });
   return [...map.values()];
 }
 export async function saveRecord(record: DrinkRecord, template?: Beverage, database = db) {

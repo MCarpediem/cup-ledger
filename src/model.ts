@@ -1,4 +1,4 @@
-export const categoryIds = ['water', 'coffee', 'tea', 'milk', 'juice', 'soda', 'energy', 'sports', 'milkTea', 'alcohol'] as const;
+export const categoryIds = ['water', 'tea', 'coffee', 'milkTea', 'juice', 'milk', 'soda', 'energy', 'sports', 'alcohol', 'other'] as const;
 export type Category = typeof categoryIds[number];
 export const nutrientKeys = ['caffeine', 'sugar', 'protein', 'calories', 'alcohol'] as const;
 export type Nutrient = typeof nutrientKeys[number];

@@ -18,7 +18,7 @@ describe('nutrition and reference values', () => {
   });
   it('only counts water-qualified snapshots, excluding sparkling water and coffee', () => {
     const records = catalog.filter(t => ['water-plain', 'water-mineral', 'water-purified', 'water-sparkling', 'coffee-americano'].includes(t.id)).map(t => fixture({ id: t.id, plainWater: t.plainWater, category: t.category, volume: 100, quantity: 1 }));
-    expect(aggregate(records).water.value).toBe(300);
+    expect(aggregate(records).water.value).toBe(100);
   });
   it('flags partially unknown totals without discarding known quantities', () => {
     const totals = aggregate([fixture({ nutrition: { ...zeroNutrition(), sugar: null } }), fixture({ nutrition: { ...zeroNutrition(), sugar: 10 }, quantity: 3 })]);

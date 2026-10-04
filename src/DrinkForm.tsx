@@ -2,9 +2,9 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Check, ChevronRight, GlassWater, Minus, Plus, Wine } from 'lucide-react';
 import { categories } from './catalog';
-import { db, saveRecord } from './db';
+import { db, pinFavorite, saveRecord } from './db';
 import { alcoholGrams, convertNutrition, dayKey, localInputTime, pretty, specificationNutrition, validateRecord } from './domain';
-import { allSources, categoryIds, metricInfo, zeroNutrition, type Basis, type Beverage, type Category, type DrinkRecord, type Nutrition } from './model';
+import { allSources, categoryIds, metricInfo, zeroNutrition, type Basis, type Beverage, type Category, type DrinkRecord, type FavoriteDrink, type Nutrition } from './model';
 import { BackHeader, Badge, ErrorMessage, errorText } from './components';
 import styles from './App.module.css';
 
@@ -37,6 +37,7 @@ export function DrinkForm({ template, record, templateMode = false, reselected =
   const [updateDefault, setUpdateDefault] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [pinned, setPinned] = useState(false);
   const [specification, setSpecification] = useState(snapshot?.specification ?? template?.defaultSpecification ?? '');
   const perServing = convertNutrition(nutrition, volume || 1, basis, 'serving');
   perServing.alcohol = category === 'alcohol' ? alcoholGrams(volume, abv, manualAlcohol, alcoholManual) : 0;
@@ -87,6 +88,16 @@ export function DrinkForm({ template, record, templateMode = false, reselected =
       }
     } catch (e) { setError(errorText(e)); } finally { setBusy(false); }
   }
+  async function pinCurrent() {
+    setError('');
+    try {
+      const templateId = template?.id ?? record?.templateId ?? `custom-${name.trim().toLowerCase().replace(/\s+/g, '-')}`;
+      const now = new Date().toISOString();
+      const favorite: FavoriteDrink = { id: crypto.randomUUID(), templateId, typeId: snapshot?.typeId ?? templateId, name: name.trim(), category, plainWater: category === 'water' && plainWater, volume, nutrition: perServing, sources: { ...sources, alcohol: alcoholManual ? 'manual' : 'estimated' }, abv: category === 'alcohol' ? abv : null, alcoholManual: category === 'alcohol' && alcoholManual, specification, pinnedAt: now, lastUsedAt: now };
+      await pinFavorite(favorite);
+      setPinned(true);
+    } catch (e) { setError(errorText(e)); }
+  }
   async function remove() {
     if (!window.confirm(templateMode ? '删除这个自定义饮品？历史记录仍会保留。' : '删除这条饮品记录？此操作无法恢复。')) return;
     setBusy(true);
@@ -109,7 +120,7 @@ export function DrinkForm({ template, record, templateMode = false, reselected =
       </section>
       <section className={styles.totalPanel} aria-label="本次合计"><div className={styles.sectionTitle}><h2>{templateMode ? '默认单份合计' : '本次合计'}</h2><span>{pretty(volume * (templateMode ? 1 : quantity))} ml · {templateMode ? 1 : quantity} 份</span></div><div className={styles.totalGrid}>{(['caffeine', 'sugar', 'protein', 'calories', ...(category === 'alcohol' ? ['alcohol'] : [])] as (keyof Nutrition)[]).map(key => <div key={key}><span>{metricInfo[key].label}</span><strong>{perServing[key] === null ? '未填写' : pretty(perServing[key]! * (templateMode ? 1 : quantity))}<small>{perServing[key] === null ? '' : metricInfo[key].unit}</small></strong><small>单份 {perServing[key] === null ? '未填写' : `${pretty(perServing[key]!)} ${metricInfo[key].unit}`}</small></div>)}</div>{plainWater && category === 'water' && <p className={styles.footnote}>计入水 {pretty(volume * (templateMode ? 1 : quantity))} ml</p>}</section>
       {dirty && !templateMode && template && <fieldset className={styles.saveScope}><legend>营养值有调整，如何保存？</legend><label><input type="radio" name="scope" checked={!updateDefault} onChange={() => setUpdateDefault(false)} />仅本次</label><label><input type="radio" name="scope" checked={updateDefault} onChange={() => setUpdateDefault(true)} />更新该饮品默认值</label><small>历史记录不会随默认值改变。</small></fieldset>}
-      <ErrorMessage error={error} /><button type="submit" disabled={busy} className={styles.primary}><Check size={19} />{busy ? '保存中…' : templateMode ? '保存饮品' : record ? '保存修改' : '保存这一杯'}</button>
+      <ErrorMessage error={error} />{!templateMode && <button type="button" disabled={busy || pinned} className={styles.pinButton} onClick={() => void pinCurrent()}>{pinned ? '已固定为常喝饮品' : '固定为常喝饮品'}</button>}<button type="submit" disabled={busy} className={styles.primary}><Check size={19} />{busy ? '保存中…' : templateMode ? '保存饮品' : record ? '保存修改' : '保存这一杯'}</button>
       {(record && !templateMode || templateMode && template?.custom) && <button type="button" disabled={busy} className={styles.deleteButton} onClick={() => void remove()}>{templateMode ? '删除自定义饮品' : '删除这条记录'}</button>}
     </form>
   </>;

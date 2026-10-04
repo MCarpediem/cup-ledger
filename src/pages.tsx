@@ -2,11 +2,11 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import { ArrowRight, ChevronRight, CupSoda, Leaf, Search, Settings2, ShieldCheck, SlidersHorizontal, Trash2 } from 'lucide-react';
-import { db, clearData, saveSettings } from './db';
+import { ArrowRight, ChevronRight, CupSoda, Leaf, Plus, Search, Settings2, ShieldCheck, SlidersHorizontal, Trash2 } from 'lucide-react';
+import { db, clearData, saveRecord, saveSettings, touchFavorite, unpinFavorite } from './db';
 import { categories } from './catalog';
-import { aggregate, pretty } from './domain';
-import { categoryIds, type Category, type Settings } from './model';
+import { aggregate, dayKey, pretty } from './domain';
+import { categoryIds, type Category, type DrinkRecord, type FavoriteDrink, type Settings } from './model';
 import { AddButton, BackHeader, Badge, Empty, ErrorMessage, Header, MetricSummary, RecordList, SectionTitle, errorText, useData, useToday } from './components';
 import styles from './App.module.css';
 import { HistoryFilters } from './HistoryFilters';
@@ -26,13 +26,27 @@ export function Today() {
   </>;
 }
 export function History() {
-  const { records } = useData();
+  const { records, favorites } = useData();
   const [date, setDate] = useState('');
   const [category, setCategory] = useState<Category | ''>('');
   const filtered = records.filter(r => (!date || r.dayKey === date) && (!category || r.category === category));
   const days = [...new Set(filtered.map(r => r.dayKey))].sort().reverse();
+  const [expandedFavorites, setExpandedFavorites] = useState(false);
+  const [undoId, setUndoId] = useState<string | null>(null);
+  const visibleFavorites = expandedFavorites ? favorites : favorites.slice(0, 4);
+  async function quickLog(favorite: FavoriteDrink) {
+    const now = new Date();
+    const record: DrinkRecord = { id: crypto.randomUUID(), templateId: favorite.templateId, typeId: favorite.typeId, name: favorite.name, category: favorite.category, plainWater: favorite.plainWater, volume: favorite.volume, quantity: 1, consumedAt: now.toISOString(), dayKey: dayKey(now), nutrition: structuredClone(favorite.nutrition), sources: structuredClone(favorite.sources), abv: favorite.abv, alcoholManual: favorite.alcoholManual, specification: favorite.specification };
+    await saveRecord(record);
+    await touchFavorite(favorite.id);
+    setUndoId(record.id);
+    window.setTimeout(() => setUndoId(current => current === record.id ? null : current), 5000);
+  }
+  async function undoQuickLog() { if (!undoId) return; await db.records.delete(undoId); setUndoId(null); }
   return <><Header title="每一杯的足迹" eyebrow="饮品日记 / RECORDS" action={<SlidersHorizontal size={23} />} />
     <section className={styles.historyOverview} aria-label="记录概览"><div><p>把喝过的每一杯，留在这里</p><div className={styles.historyNumbers}><span><strong>{records.length}</strong> 条记录</span><span><strong>{new Set(records.map(r => r.dayKey)).size}</strong> 个记录日</span></div></div><AddButton /></section>
+    {favorites.length > 0 && <section className={styles.favoritesPanel} aria-label="常喝饮品"><div className={styles.favoritesHeader}><div><h2>常喝饮品</h2><p>点一下，立即记入一份</p></div><span>{favorites.length} / 8</span></div><div className={styles.favoriteGrid}>{visibleFavorites.map(favorite => <div className={styles.favoriteItem} key={favorite.id}><button type="button" className={styles.favoriteMain} onClick={() => void quickLog(favorite)}><Badge category={favorite.category} /><span><strong>{favorite.name}</strong><small>{favorite.specification || `${favorite.volume} ml`}</small></span><Plus size={19} /></button><button type="button" className={styles.favoriteRemove} aria-label={`取消固定 ${favorite.name}`} onClick={() => void unpinFavorite(favorite.id)}>×</button></div>)}</div>{favorites.length > 4 && <button type="button" className={styles.favoriteExpand} onClick={() => setExpandedFavorites(value => !value)}>{expandedFavorites ? '收起常喝饮品' : `展开全部 ${favorites.length} 个`}</button>}</section>}
+    {undoId && <div className={styles.undoToast} role="status"><span>已记入常喝饮品</span><button type="button" onClick={() => void undoQuickLog()}>撤销</button></div>}
     <HistoryFilters date={date} onDateChange={setDate} category={category} onCategoryChange={setCategory} records={records} />
     {(date || category) && <button className={styles.textButton} onClick={() => { setDate(''); setCategory(''); }}>清除筛选</button>}
     <p className={styles.footnote}>共 {filtered.length} 条记录 · 点击任意记录可编辑或删除</p>
@@ -49,12 +63,13 @@ export function DrinkPicker({ editId }: { editId?: string | null }) {
   const customPath = `/templates/new?${new URLSearchParams({ ...Object.fromEntries(flowQuery), via: 'add' })}`;
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<Category | ''>('');
-  const filtered = templates.filter(item => (!category || item.category === category) && `${item.name}${categories[item.category].name}`.toLowerCase().includes(search.trim().toLowerCase()));
+  const term = search.trim().toLowerCase();
+  const filtered = templates.filter(item => (!category || item.category === category) && (!term || `${item.brand ?? ''} ${item.name} ${categories[item.category].name} ${(item.searchTerms ?? []).join(' ')}`.toLowerCase().includes(term))).sort((a, b) => Number(b.kind === 'product') - Number(a.kind === 'product') || a.name.localeCompare(b.name));
   return <><BackHeader title="选择一杯饮品" to={editId ? `/record/${editId}` : query.get('from') === 'records' ? '/records' : '/'} />
     <div className={styles.search}><Search size={20} /><input aria-label="搜索饮品" placeholder="搜索饮品，比如：拿铁、绿茶" value={search} onChange={e => setSearch(e.target.value)} /></div>
     <div className={styles.chips} role="group" aria-label="选择饮品类别"><button aria-pressed={!category} onClick={() => setCategory('')}>全部</button>{categoryIds.map(id => <button key={id} aria-pressed={category === id} onClick={() => setCategory(id)}>{categories[id].icon} {categories[id].name}</button>)}</div>
     <div className={styles.pickerNote}><span>选一杯，记录此刻</span><Link to={customPath}>自定义饮品 +</Link></div>
-    {categoryIds.filter(id => filtered.some(item => item.category === id)).map(id => <section key={id}><SectionTitle title={categories[id].name} /><div className={styles.drinkGrid}>{filtered.filter(item => item.category === id).map(item => <Link className={styles.drinkOption} key={item.id} to={`/add/${item.id}${suffix}`}><Badge category={id} /><div><h3>{item.name}</h3><p>{item.volume} ml · {item.custom ? '自定义' : '预设估算'}</p></div><ChevronRight size={17} /></Link>)}</div></section>)}
+    {categoryIds.filter(id => filtered.some(item => item.category === id)).map(id => <section key={id}><SectionTitle title={categories[id].name} /><div className={styles.drinkGrid}>{filtered.filter(item => item.category === id).map(item => <Link className={`${styles.drinkOption} ${item.kind === 'product' ? styles.productOption : ''}`} key={item.id} to={`/add/${item.id}${suffix}`}><Badge category={id} /><div><h3>{item.brand ? `${item.brand} · ${item.name}` : item.name}</h3><p>{item.packageLabel ?? `${item.volume} ml`} · {item.kind === 'product' ? '包装标签' : item.custom ? '自定义' : '通用估算'}</p></div><ChevronRight size={17} /></Link>)}</div></section>)}
     {!filtered.length && <div className={styles.empty}><h3>没有找到这杯饮品</h3><p>试试其他关键词，或创建自己的配方。</p><Link className={styles.primary} to={customPath}>创建自定义饮品</Link></div>}
   </>;
 }

@@ -277,10 +277,10 @@ test('picker shows the requested category order and beverage options', async ({ 
   await start(page);
   await page.getByRole('link', { name: '添加饮品', exact: true }).click();
   await expect(page.locator('main section h2')).toHaveText(['水', '茶', '咖啡', '奶茶', '果汁', '牛奶', '碳酸饮料', '能量饮料', '运动饮料', '酒精饮品', '其他种类']);
-  const choices = (category: string) => page.locator('main section').filter({ has: page.getByRole('heading', { name: category, exact: true }) }).locator('h3');
-  await expect(choices('水')).toHaveText(['水']);
-  await expect(choices('牛奶')).toHaveText(['全脂牛奶', '低脂牛奶', '脱脂牛奶']);
-  await expect(choices('碳酸饮料')).toHaveText(['可乐', '无糖可乐', '雪碧', '芬达橙味']);
+  const choices = (category: string) => page.locator('main section').filter({ has: page.getByRole('heading', { name: category, exact: true }) });
+  await expect(choices('水').locator('h3').filter({ hasText: /^水$/ })).toBeVisible();
+  for (const name of ['娃哈哈 · AD 钙奶', '全脂牛奶', '低脂牛奶', '脱脂牛奶']) await expect(choices('牛奶').locator('h3').filter({ hasText: name })).toBeVisible();
+  for (const name of ['百事 · 百事可乐', '可口可乐 · 可口可乐', '可乐', '无糖可乐', '雪碧', '芬达橙味']) await expect(choices('碳酸饮料').locator('h3').filter({ hasText: new RegExp(`^${name}$`) })).toBeVisible();
   await expect(page.getByRole('heading', { name: '摩卡', exact: true })).toHaveCount(1);
   await expect(page.getByRole('heading', { name: '澳白', exact: true })).toHaveCount(1);
   await noOverflow(page);
@@ -440,4 +440,26 @@ test('water is labeled as water, caffeine and sugar bars use warm red, and prefe
   const record = page.getByRole('link', { name: '编辑 拿铁咖啡' }).first();
   await expect(record.locator('[class*="recordNutrients"]')).toBeVisible();
   await expect(record.locator('[class*="recordAction"]')).toContainText('查看详情');
+});
+
+test('records page provides one-tap favorites with undo, and search prioritizes packaged products', async ({ page }) => {
+  await start(page);
+  await choose(page, '美式咖啡');
+  await page.getByRole('button', { name: '固定为常喝饮品' }).click();
+  await expect(page.getByRole('button', { name: '已固定为常喝饮品' })).toBeDisabled();
+  await page.goto('/records');
+  const favorite = page.getByRole('button', { name: /美式咖啡/ }).filter({ has: page.locator('svg') }).first();
+  await expect(page.getByRole('region', { name: '常喝饮品' })).toContainText('美式咖啡');
+  await favorite.click();
+  await expect(page.getByRole('status')).toContainText('已记入常喝饮品');
+  await page.getByRole('button', { name: '撤销' }).click();
+  await expect(page.getByRole('status')).toHaveCount(0);
+  await page.getByRole('link', { name: '添加饮品', exact: true }).click();
+  await page.getByRole('textbox', { name: '搜索饮品' }).fill('百事');
+  await expect(page.getByRole('heading', { name: '百事 · 百事可乐', exact: true })).toBeVisible();
+  await expect(page.getByText('330 ml 罐装 · 包装标签', { exact: true })).toBeVisible();
+  await page.getByRole('textbox', { name: '搜索饮品' }).fill('冰红茶');
+  await expect(page.getByRole('heading', { name: '康师傅 · 冰红茶', exact: true })).toBeVisible();
+  await expect(page.getByText('500 ml 瓶装 · 包装标签', { exact: true })).toBeVisible();
+  await noOverflow(page);
 });

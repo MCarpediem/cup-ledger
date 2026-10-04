@@ -32,6 +32,26 @@ export interface Beverage {
   custom?: boolean;
   defaultSpecification?: string;
   note: string;
+  kind?: 'product' | 'generic';
+  brand?: string;
+  searchTerms?: string[];
+  packageLabel?: string;
+}
+export interface FavoriteDrink {
+  id: string;
+  templateId: string;
+  typeId: string;
+  name: string;
+  category: Category;
+  plainWater: boolean;
+  volume: number;
+  nutrition: Nutrition;
+  sources: Sources;
+  abv: number | null;
+  alcoholManual: boolean;
+  specification: string;
+  pinnedAt: string;
+  lastUsedAt: string;
 }
 export interface DrinkRecord {
   id: string;

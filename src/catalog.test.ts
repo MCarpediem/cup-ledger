@@ -8,8 +8,8 @@ describe('revised beverage catalog', () => {
     expect(categoryIds.map(id => categories[id].name)).toEqual(['水', '茶', '咖啡', '奶茶', '果汁', '牛奶', '碳酸饮料', '能量饮料', '运动饮料', '酒精饮品', '其他种类']);
     expect(catalog.filter(t => t.category === 'water').map(t => t.name)).toEqual(['水']);
     expect(catalog.filter(t => t.category === 'coffee').map(t => t.name)).toEqual(expect.arrayContaining(['摩卡', '澳白']));
-    expect(catalog.filter(t => t.category === 'milk').map(t => t.name)).toEqual(['全脂牛奶', '低脂牛奶', '脱脂牛奶']);
-    expect(catalog.filter(t => t.category === 'soda').map(t => t.name)).toEqual(['可乐', '无糖可乐', '雪碧', '芬达橙味']);
+    expect(catalog.filter(t => t.category === 'milk').map(t => t.name)).toEqual(expect.arrayContaining(['全脂牛奶', '低脂牛奶', '脱脂牛奶', 'AD 钙奶']));
+    expect(catalog.filter(t => t.category === 'soda').map(t => t.name)).toEqual(expect.arrayContaining(['可乐', '无糖可乐', '雪碧', '芬达橙味', '可口可乐', '百事可乐']));
     expect(catalog.find(t => t.id === 'water-sparkling')?.plainWater).toBe(false);
   });
   it('preserves user nutrition overrides but applies new catalog labels and retires obsolete options', () => {

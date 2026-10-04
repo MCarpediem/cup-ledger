@@ -7,7 +7,7 @@ import { aggregate, dayKey, pretty, referenceState, type Totals } from './domain
 import { metricInfo, nutrientKeys, type Beverage, type Category, type DrinkRecord, type Settings } from './model';
 import styles from './App.module.css';
 
-export interface AppData { records: DrinkRecord[]; templates: Beverage[]; settings: Settings }
+export interface AppData { records: DrinkRecord[]; templates: Beverage[]; settings: Settings; favorites: import('./model').FavoriteDrink[] }
 export const DataContext = createContext<AppData | null>(null);
 export function useData() { return useContext(DataContext)!; }
 export function useToday() {

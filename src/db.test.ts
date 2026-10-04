@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { LedgerDB, clearData, mergedCatalog, readData, saveRecord, saveSettings } from './db';
+import { LedgerDB, clearData, mergedCatalog, pinFavorite, readData, saveRecord, saveSettings, touchFavorite, unpinFavorite } from './db';
 import { catalog } from './catalog';
-import { allSources, defaultSettings, zeroNutrition, type DrinkRecord } from './model';
+import { allSources, defaultSettings, zeroNutrition, type DrinkRecord, type FavoriteDrink } from './model';
 import { aggregate, inRange } from './domain';
 
 let database: LedgerDB;
@@ -9,6 +9,17 @@ const record = (): DrinkRecord => ({ id: 'test', typeId: 'custom', templateId: '
 beforeEach(() => { database = new LedgerDB(`test-${crypto.randomUUID()}`); });
 afterEach(async () => { await database.delete(); });
 describe('local data services', () => {
+  const favorite = (id: string): FavoriteDrink => ({ id, templateId: 'coffee-americano', typeId: 'coffee-americano', name: '美式咖啡', category: 'coffee', plainWater: false, volume: 250, nutrition: { ...zeroNutrition(), caffeine: 40 }, sources: allSources('estimated'), abv: null, alcoholManual: false, specification: '标准浓度 · 250 ml', pinnedAt: new Date().toISOString(), lastUsedAt: new Date().toISOString() });
+  it('pins at most eight quick drinks, de-duplicates templates, and supports undoing a pin', async () => {
+    await expect(pinFavorite(favorite('favorite-1'), database)).resolves.toMatchObject({ name: '美式咖啡' });
+    await expect(pinFavorite(favorite('favorite-duplicate'), database)).resolves.toMatchObject({ id: 'favorite-1' });
+    for (let index = 2; index <= 8; index += 1) await pinFavorite({ ...favorite(`favorite-${index}`), templateId: `template-${index}` }, database);
+    await expect(pinFavorite({ ...favorite('favorite-9'), templateId: 'template-9' }, database)).rejects.toThrow('最多固定 8 个');
+    await touchFavorite('favorite-1', database);
+    expect((await readData(database)).favorites).toHaveLength(8);
+    await unpinFavorite('favorite-1', database);
+    expect((await readData(database)).favorites).toHaveLength(7);
+  });
   it('keeps history snapshots when the template is changed or deleted', async () => {
     const template = { ...catalog[4], id: 'custom', custom: true };
     const draft = record();

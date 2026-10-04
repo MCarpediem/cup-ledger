@@ -125,6 +125,12 @@
 .recordFooter{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .recordFooter .sourceHint{margin:0;font-size:13px;color:#907D6F}
 .recordAction{display:inline-flex;align-items:center;gap:3px;color:#956A52;font-size:13px;font-weight:600;white-space:nowrap}
+.favoritesPanel{margin:22px 0 24px;padding:18px;background:#F0E4D7;border-radius:16px}
+.favoritesHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+.favoritesHeader h2{font-size:20px;font-weight:700;color:#59453A}.favoritesHeader p{font-size:14px;color:#866F60;margin-top:4px}.favoritesHeader>span{font-size:13px;color:#8D7361}
+.favoriteGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.favoriteItem{position:relative;min-width:0}.favoriteMain{display:flex;align-items:center;gap:9px;width:100%;min-height:70px;padding:10px 30px 10px 10px;border:1px solid #E3D0BF;border-radius:13px;background:#FFF9F2;text-align:left}.favoriteMain .badge{width:34px;height:36px;border-radius:10px;font-size:19px}.favoriteMain>span{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}.favoriteMain strong{font-size:15px;color:#5A463A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.favoriteMain small{font-size:13px;color:#8A7465;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.favoriteMain>svg{color:#9A624E}.favoriteRemove{position:absolute;right:5px;top:4px;width:22px;height:22px;border:0;background:transparent;color:#A58B7A;font-size:20px;line-height:1}.favoriteExpand{border:0;background:transparent;color:#956A52;font-size:14px;font-weight:600;padding:12px 0 0}.undoToast{position:fixed;left:50%;bottom:calc(112px + env(safe-area-inset-bottom));z-index:20;transform:translateX(-50%);display:flex;align-items:center;gap:14px;padding:11px 13px 11px 16px;border-radius:12px;background:#4F433A;color:#FFF9F2;box-shadow:0 5px 20px #3F332D35;font-size:14px}.undoToast button{border:0;border-radius:8px;padding:7px 10px;background:#E7B79B;color:#4F3328;font-weight:700}.pinButton{min-height:48px;border:1px dashed #B78A6D;border-radius:11px;background:#FBF2E9;color:#8F5F4B;font-size:15px;font-weight:600}
+.productOption{border-color:#CFAF98;background:#FFF8EF}.productOption h3{color:#684538}
 @media(max-width:600px){
  .recordNutrients{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 8px;margin-top:14px}
  .recordNutrient b{font-size:12px}.recordNutrient em{font-size:14px}

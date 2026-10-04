@@ -9,9 +9,9 @@ const record = (): DrinkRecord => ({ id: 'test', typeId: 'custom', templateId: '
 beforeEach(() => { database = new LedgerDB(`test-${crypto.randomUUID()}`); });
 afterEach(async () => { await database.delete(); });
 describe('local data services', () => {
-  const favorite = (id: string): FavoriteDrink => ({ id, templateId: 'coffee-americano', typeId: 'coffee-americano', name: '美式咖啡', category: 'coffee', plainWater: false, volume: 250, nutrition: { ...zeroNutrition(), caffeine: 40 }, sources: allSources('estimated'), abv: null, alcoholManual: false, specification: '标准浓度 · 250 ml', pinnedAt: new Date().toISOString(), lastUsedAt: new Date().toISOString() });
+  const favorite = (id: string): FavoriteDrink => ({ id, fingerprint: id === 'favorite-duplicate' ? 'fingerprint-1' : id, templateId: 'coffee-americano', typeId: 'coffee-americano', name: '美式咖啡', category: 'coffee', plainWater: false, volume: 250, nutrition: { ...zeroNutrition(), caffeine: 40 }, sources: allSources('estimated'), abv: null, alcoholManual: false, specification: '标准浓度 · 250 ml', pinnedAt: new Date().toISOString(), lastUsedAt: new Date().toISOString() });
   it('pins at most eight quick drinks, de-duplicates templates, and supports undoing a pin', async () => {
-    await expect(pinFavorite(favorite('favorite-1'), database)).resolves.toMatchObject({ name: '美式咖啡' });
+    await expect(pinFavorite({ ...favorite('favorite-1'), fingerprint: 'fingerprint-1' }, database)).resolves.toMatchObject({ name: '美式咖啡' });
     await expect(pinFavorite(favorite('favorite-duplicate'), database)).resolves.toMatchObject({ id: 'favorite-1' });
     for (let index = 2; index <= 8; index += 1) await pinFavorite({ ...favorite(`favorite-${index}`), templateId: `template-${index}` }, database);
     await expect(pinFavorite({ ...favorite('favorite-9'), templateId: 'template-9' }, database)).rejects.toThrow('最多固定 8 个');

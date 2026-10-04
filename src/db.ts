@@ -49,7 +49,7 @@ export async function readData(database = db) {
   return { records, templates: mergedCatalog(overrides), settings: settings ?? defaultSettings, favorites };
 }
 export async function pinFavorite(favorite: FavoriteDrink, database = db) {
-  const existing = await database.favorites.where('templateId').equals(favorite.templateId).first();
+  const existing = await database.favorites.toCollection().filter(item => item.fingerprint === favorite.fingerprint).first();
   if (existing) return existing;
   if (await database.favorites.count() >= 8) throw new Error('最多固定 8 个常喝饮品，请先取消一个再添加。');
   await database.favorites.add(structuredClone(favorite));

@@ -457,9 +457,9 @@ test('records page provides one-tap favorites with undo, and search prioritizes 
   await page.getByRole('link', { name: '添加饮品', exact: true }).click();
   await page.getByRole('textbox', { name: '搜索饮品' }).fill('百事');
   await expect(page.getByRole('heading', { name: '百事 · 百事可乐', exact: true })).toBeVisible();
-  await expect(page.getByText('330 ml 罐装 · 包装标签', { exact: true })).toBeVisible();
+  await expect(page.getByText('330 ml 罐装 · 商品预填 · 请核对标签', { exact: true })).toBeVisible();
   await page.getByRole('textbox', { name: '搜索饮品' }).fill('冰红茶');
   await expect(page.getByRole('heading', { name: '康师傅 · 冰红茶', exact: true })).toBeVisible();
-  await expect(page.getByText('500 ml 瓶装 · 包装标签', { exact: true })).toBeVisible();
+  await expect(page.getByText('500 ml 瓶装 · 商品预填 · 请核对标签', { exact: true })).toBeVisible();
   await noOverflow(page);
 });

@@ -93,7 +93,8 @@ export function DrinkForm({ template, record, templateMode = false, reselected =
     try {
       const templateId = template?.id ?? record?.templateId ?? `custom-${name.trim().toLowerCase().replace(/\s+/g, '-')}`;
       const now = new Date().toISOString();
-      const favorite: FavoriteDrink = { id: crypto.randomUUID(), templateId, typeId: snapshot?.typeId ?? templateId, name: name.trim(), category, plainWater: category === 'water' && plainWater, volume, nutrition: perServing, sources: { ...sources, alcohol: alcoholManual ? 'manual' : 'estimated' }, abv: category === 'alcohol' ? abv : null, alcoholManual: category === 'alcohol' && alcoholManual, specification, pinnedAt: now, lastUsedAt: now };
+      const fingerprint = `${templateId}|${volume}|${specification}|${JSON.stringify(perServing)}|${abv ?? ''}`;
+      const favorite: FavoriteDrink = { id: crypto.randomUUID(), fingerprint, templateId, typeId: snapshot?.typeId ?? templateId, name: name.trim(), category, plainWater: category === 'water' && plainWater, volume, nutrition: perServing, sources: { ...sources, alcohol: alcoholManual ? 'manual' : 'estimated' }, abv: category === 'alcohol' ? abv : null, alcoholManual: category === 'alcohol' && alcoholManual, specification, pinnedAt: now, lastUsedAt: now };
       await pinFavorite(favorite);
       setPinned(true);
     } catch (e) { setError(errorText(e)); }

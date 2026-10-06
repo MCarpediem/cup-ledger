@@ -146,7 +146,7 @@
 .metricLabel>span+span{font-size:13px;font-weight:500;color:#9A8170;letter-spacing:.01em}
 .metricValue,.intakeGrid p,.periodMetrics p{color:#6F5040;font-weight:650}
 .metricValue small,.intakeGrid small,.periodMetrics p small{color:#8A7162;font-size:15px;font-weight:500}
-.metricHint,.periodMetrics>div>small{color:#917868;font-size:14px;font-weight:500}
+.metricHint,.periodMetrics>div>small{color:#917868;font-size:16px;font-weight:500}
 .metricHint>span{color:#AA9181;font-size:13px}
 .metric_water .metricLabel>span:first-child{color:#66584F}.metric_water .metricValue,.metric_water .intakeGrid p{color:#765B4C}
 .metric_caffeine .metricLabel>span:first-child{color:#66584F}.metric_caffeine .metricValue,.metric_caffeine .intakeGrid p{color:#814E48}
@@ -170,6 +170,7 @@
 .favoriteMain strong{font-size:16px;line-height:1.45;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
 .favoriteMain small{font-size:14px;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
 .favoriteMain>svg{flex:0 0 auto}
+.favoriteItem{cursor:grab}.favoriteItem:active{cursor:grabbing}.favoriteItem[draggable=true]{touch-action:none}
 .chartSelect{position:relative;display:flex;align-items:center;justify-content:space-between;gap:14px;color:#765B4C;font-weight:600}
 .metricPicker{position:relative;width:210px}
 .metricSelectButton{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;min-height:48px;padding:10px 12px;border:1px solid #D8C2AF;border-radius:13px;background:#FFF9F2;color:#6F5040;font-size:16px;font-weight:650;box-shadow:0 3px 10px #7B5A460D}
@@ -190,6 +191,11 @@
 @media(max-width:360px){.metricPicker{width:170px}.metricSelectButton{font-size:15px}.metricMenu button{font-size:14px}}
 .metricLabel>span:first-child,.intakeGrid>div>span,.periodMetrics>div>span{color:#66584F}
 .metricHint,.periodMetrics>div>small{font-size:15px}
+.metricHint{font-size:16px}
+.historyNumbers span{display:inline-flex;align-items:baseline;gap:6px;white-space:nowrap}.historyNumbers strong{line-height:1;margin-right:0}
+.metricLabel>span+span{font-size:16px}
+.favoriteMain{padding-right:27px;gap:8px}.favoriteMain .badge{width:42px;height:42px;flex-basis:42px;font-size:20px}
+@media(max-width:600px){.favoriteGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.favoriteMain{min-height:74px;padding-left:9px}.favoriteMain strong{font-size:15px}.favoriteMain small{font-size:13px}}
 .intakeGrid .metric_water p,.periodMetrics .metric_water p{color:#78604F}
 .intakeGrid .metric_caffeine p,.periodMetrics .metric_caffeine p{color:#814E48}
 .intakeGrid .metric_sugar p,.periodMetrics .metric_sugar p{color:#87453F}

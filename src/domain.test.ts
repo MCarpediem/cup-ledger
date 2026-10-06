@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aggregate, alcoholGrams, convertNutrition, dayKey, inRange, periodRange, preferences, referenceState, servingNutrition, specificationNutrition, uniqueDrinks, validateRecord } from './domain';
+import { aggregate, alcoholGrams, convertNutrition, dayKey, dominantDrink, inRange, periodRange, preferences, referenceState, servingNutrition, specificationNutrition, uniqueDrinks, validateRecord } from './domain';
 import { allSources, zeroNutrition, type DrinkRecord } from './model';
 import { catalog } from './catalog';
 
@@ -87,6 +87,10 @@ describe('calendar and preferences', () => {
   it('resolves ties by stable type ID', () => {
     expect(preferences([fixture({ typeId: 'b' }), fixture({ typeId: 'a' })]).frequent?.id).toBe('a');
     expect(preferences([]).frequent).toBeUndefined();
+  });
+  it('selects the highest-volume non-water drink for calendar marks', () => {
+    expect(dominantDrink([fixture({ typeId: 'water', category: 'water', volume: 1000 }), fixture({ typeId: 'tea', category: 'tea', volume: 300, quantity: 2 }), fixture({ typeId: 'coffee', category: 'coffee', volume: 500, quantity: 1 })])?.typeId).toBe('tea');
+    expect(dominantDrink([fixture({ typeId: 'water', category: 'water', volume: 500 })])?.typeId).toBe('water');
   });
 });
 describe('input validation', () => {

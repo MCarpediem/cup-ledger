@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { ArrowRight, ChevronRight, CupSoda, Leaf, Plus, Search, Settings2, ShieldCheck, SlidersHorizontal, Trash2 } from 'lucide-react';
-import { db, clearData, saveRecord, saveSettings, touchFavorite, unpinFavorite } from './db';
+import { db, clearData, reorderFavorites, saveRecord, saveSettings, touchFavorite, unpinFavorite } from './db';
 import { categories } from './catalog';
 import { aggregate, dayKey, pretty } from './domain';
 import { categoryIds, type Category, type DrinkRecord, type FavoriteDrink, type Settings } from './model';
@@ -32,6 +32,7 @@ export function History() {
   const filtered = records.filter(r => (!date || r.dayKey === date) && (!category || r.category === category));
   const days = [...new Set(filtered.map(r => r.dayKey))].sort().reverse();
   const [expandedFavorites, setExpandedFavorites] = useState(false);
+  const [draggedFavorite, setDraggedFavorite] = useState<string | null>(null);
   const [undoId, setUndoId] = useState<string | null>(null);
   const visibleFavorites = expandedFavorites ? favorites : favorites.slice(0, 4);
   async function quickLog(favorite: FavoriteDrink) {
@@ -43,9 +44,19 @@ export function History() {
     window.setTimeout(() => setUndoId(current => current === record.id ? null : current), 5000);
   }
   async function undoQuickLog() { if (!undoId) return; await db.records.delete(undoId); setUndoId(null); }
+  async function moveFavorite(targetId: string) {
+    if (!draggedFavorite || draggedFavorite === targetId) return;
+    const next = [...favorites];
+    const from = next.findIndex(item => item.id === draggedFavorite);
+    const to = next.findIndex(item => item.id === targetId);
+    if (from < 0 || to < 0) return;
+    const [item] = next.splice(from, 1); next.splice(to, 0, item);
+    await reorderFavorites(next.map(item => item.id));
+    setDraggedFavorite(null);
+  }
   return <><Header title="每一杯的足迹" eyebrow="饮品日记 / RECORDS" action={<SlidersHorizontal size={23} />} />
     <section className={styles.historyOverview} aria-label="记录概览"><div><p>把喝过的每一杯，留在这里</p><div className={styles.historyNumbers}><span><strong>{records.length}</strong> 条记录</span><span><strong>{new Set(records.map(r => r.dayKey)).size}</strong> 个记录日</span></div></div><AddButton /></section>
-    {favorites.length > 0 && <section className={styles.favoritesPanel} aria-label="常喝饮品"><div className={styles.favoritesHeader}><div><h2>常喝饮品</h2><p>点一下，立即记入一份</p></div><span>{favorites.length} / 8</span></div><div className={styles.favoriteGrid}>{visibleFavorites.map(favorite => <div className={styles.favoriteItem} key={favorite.id}><button type="button" className={styles.favoriteMain} onClick={() => void quickLog(favorite)}><Badge category={favorite.category} /><span><strong>{favorite.name}</strong><small>{favorite.specification || `${favorite.volume} ml`}</small></span><Plus size={19} /></button><button type="button" className={styles.favoriteRemove} aria-label={`取消固定 ${favorite.name}`} onClick={() => void unpinFavorite(favorite.id)}>×</button></div>)}</div>{favorites.length > 4 && <button type="button" className={styles.favoriteExpand} onClick={() => setExpandedFavorites(value => !value)}>{expandedFavorites ? '收起常喝饮品' : `展开全部 ${favorites.length} 个`}</button>}</section>}
+    {favorites.length > 0 && <section className={styles.favoritesPanel} aria-label="常喝饮品"><div className={styles.favoritesHeader}><div><h2>常喝饮品</h2><p>点一下记入，拖动可调整顺序</p></div><span>{favorites.length} / 8</span></div><div className={styles.favoriteGrid}>{visibleFavorites.map(favorite => <div className={styles.favoriteItem} key={favorite.id} draggable onDragStart={() => setDraggedFavorite(favorite.id)} onDragOver={event => event.preventDefault()} onDrop={() => void moveFavorite(favorite.id)}><button type="button" className={styles.favoriteMain} onClick={() => void quickLog(favorite)}><Badge category={favorite.category} /><span><strong>{favorite.name}</strong><small>{favorite.specification || `${favorite.volume} ml`}</small></span><Plus size={19} /></button><button type="button" className={styles.favoriteRemove} aria-label={`取消固定 ${favorite.name}`} onClick={() => void unpinFavorite(favorite.id)}>×</button></div>)}</div>{favorites.length > 4 && <button type="button" className={styles.favoriteExpand} onClick={() => setExpandedFavorites(value => !value)}>{expandedFavorites ? '收起常喝饮品' : `展开全部 ${favorites.length} 个`}</button>}</section>}
     {undoId && <div className={styles.undoToast} role="status"><span>已记入常喝饮品</span><button type="button" onClick={() => void undoQuickLog()}>撤销</button></div>}
     <HistoryFilters date={date} onDateChange={setDate} category={category} onCategoryChange={setCategory} records={records} />
     {(date || category) && <button className={styles.textButton} onClick={() => { setDate(''); setCategory(''); }}>清除筛选</button>}

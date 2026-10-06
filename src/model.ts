@@ -39,6 +39,7 @@ export interface Beverage {
 }
 export interface FavoriteDrink {
   id: string;
+  sortOrder?: number;
   fingerprint: string;
   templateId: string;
   typeId: string;

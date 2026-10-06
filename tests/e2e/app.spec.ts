@@ -161,10 +161,9 @@ test('week/month calendars deduplicate drinks, show overflow, and year has no ca
   await page.getByRole('link', { name: '统计', exact: true }).click();
   const day = page.getByRole('button', { name: '2026-09-29，4 种饮品', exact: true });
   await expect(day).toBeVisible();
-  await expect(day.locator('[title]')).toHaveCount(4);
+  await expect(day.locator('[title]')).toHaveCount(1);
   await page.getByRole('button', { name: '月', exact: true }).click();
-  await expect(day).toContainText('+2');
-  await expect(day.locator('[title]')).toHaveCount(2);
+  await expect(day.locator('[title]')).toHaveCount(1);
   await day.click();
   await expect(page.getByRole('link', { name: '编辑 拿铁咖啡' })).toHaveCount(2);
   await expect(page.getByText('日均按 29 个自然日计算，截至今天。')).toBeVisible();

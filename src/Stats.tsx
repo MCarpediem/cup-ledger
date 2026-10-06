@@ -3,7 +3,7 @@ import { addMonths, addWeeks, addYears, format, parseISO, startOfWeek, endOfWeek
 import { Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Check, ChevronDown, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { categories } from './catalog';
-import { aggregate, dateList, dayKey, inRange, metrics, periodRange, preferences, pretty, uniqueDrinks } from './domain';
+import { aggregate, dateList, dayKey, dominantDrink, inRange, metrics, periodRange, preferences, pretty } from './domain';
 import { categoryIds, metricInfo, type Metric, type Period } from './model';
 import { Badge, DayDetail, Empty, Header, SectionTitle, useData, useToday } from './components';
 import styles from './App.module.css';
@@ -44,9 +44,10 @@ export function Stats() {
     {period !== 'year' && <section className={styles.calendar} aria-label={period === 'week' ? '周日历' : '月日历'}><div className={styles.weekdays}>{['一', '二', '三', '四', '五', '六', '日'].map(day => <span key={day}>{day}</span>)}</div><div className={styles.calendarGrid}>{calendarDates.map(date => {
       const key = dayKey(date);
       const outside = key < range.startKey || key > range.endKey;
-      const drinks = uniqueDrinks(records.filter(r => r.dayKey === key));
-      const visible = period === 'month' ? drinks.slice(0, 2) : drinks;
-      return <button key={key} className={`${styles.calendarDay} ${outside ? styles.outside : ''}`} disabled={outside || key > today} aria-pressed={selected === key} aria-label={`${key}，${drinks.length} 种饮品`} onClick={() => setSelected(key)}><span className={key === today ? styles.todayDate : ''}>{format(date, 'd')}</span><div>{visible.map(drink => <span title={drink.name} key={drink.typeId}><Badge category={drink.category} small /></span>)}{drinks.length > visible.length && <small>+{drinks.length - visible.length}</small>}</div></button>;
+      const dayRecords = records.filter(r => r.dayKey === key);
+      const drinks = new Set(dayRecords.map(record => record.typeId));
+      const dominant = dominantDrink(dayRecords);
+      return <button key={key} className={`${styles.calendarDay} ${outside ? styles.outside : ''}`} disabled={outside || key > today} aria-pressed={selected === key} aria-label={`${key}，${drinks.size} 种饮品`} onClick={() => setSelected(key)}><span className={key === today ? styles.todayDate : ''}>{format(date, 'd')}</span><div>{dominant && <span title={dominant.name}><Badge category={dominant.category} small /></span>}</div></button>;
     })}</div></section>}
     <SectionTitle title="这一段时间的积累"><span className={styles.muted}>{cycleRecords.length} 条记录</span></SectionTitle><p className={styles.footnote}>日均按 {range.days} 个自然日计算{currentRange ? '，截至今天' : '，包含没有记录的日期'}。</p>
     <div className={styles.periodMetrics} role="group" aria-label="周期摄入指标">{metrics.map(key => <div key={key} className={styles[`metric_${key}`]}><span>{metricInfo[key].label}</span><p>{pretty(sums[key].value)} <small>{metricInfo[key].unit}</small></p><small>日均 {pretty(sums[key].value / range.days)} {metricInfo[key].unit}{sums[key].incomplete && ' · 合计不完整'}</small></div>)}</div>

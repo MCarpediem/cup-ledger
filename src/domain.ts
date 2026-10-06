@@ -62,6 +62,17 @@ export function dateList(start: Date, end: Date) {
 export function uniqueDrinks(records: DrinkRecord[]) {
   return [...new Map([...records].sort((a, b) => a.typeId.localeCompare(b.typeId)).map(record => [record.typeId, record])).values()];
 }
+export function dominantDrink(records: DrinkRecord[]) {
+  const candidates = records.filter(record => record.category !== 'water');
+  const pool = candidates.length ? candidates : records.filter(record => record.category === 'water');
+  const totals = new Map<string, { record: DrinkRecord; volume: number }>();
+  for (const record of pool) {
+    const current = totals.get(record.typeId);
+    if (current) current.volume += record.volume * record.quantity;
+    else totals.set(record.typeId, { record, volume: record.volume * record.quantity });
+  }
+  return [...totals.values()].sort((a, b) => b.volume - a.volume || a.record.typeId.localeCompare(b.record.typeId))[0]?.record;
+}
 export function preferences(records: DrinkRecord[]) {
   const grouped = new Map<string, { id: string; name: string; quantity: number; volume: number }>();
   for (const r of records) {

@@ -45,15 +45,29 @@ export async function clearData(database = db) {
   });
 }
 export async function readData(database = db) {
-  const [records, overrides, settings, favorites] = await Promise.all([database.records.orderBy('consumedAt').reverse().toArray(), database.templates.toArray(), database.settings.get('main'), database.favorites.orderBy('lastUsedAt').reverse().toArray()]);
+  const [records, overrides, settings, favorites] = await Promise.all([database.records.orderBy('consumedAt').reverse().toArray(), database.templates.toArray(), database.settings.get('main'), database.favorites.toArray()]);
+  favorites.sort((a, b) => {
+    if (Number.isFinite(a.sortOrder) && Number.isFinite(b.sortOrder)) return a.sortOrder! - b.sortOrder!;
+    if (Number.isFinite(a.sortOrder)) return -1;
+    if (Number.isFinite(b.sortOrder)) return 1;
+    return b.lastUsedAt.localeCompare(a.lastUsedAt);
+  });
   return { records, templates: mergedCatalog(overrides), settings: settings ?? defaultSettings, favorites };
 }
 export async function pinFavorite(favorite: FavoriteDrink, database = db) {
   const existing = await database.favorites.toCollection().filter(item => item.fingerprint === favorite.fingerprint).first();
   if (existing) return existing;
   if (await database.favorites.count() >= 8) throw new Error('最多固定 8 个常喝饮品，请先取消一个再添加。');
-  await database.favorites.add(structuredClone(favorite));
-  return favorite;
+  const current = await database.favorites.toArray();
+  const sortOrder = current.reduce((max, item) => Math.max(max, item.sortOrder ?? -1), -1) + 1;
+  const stored = { ...favorite, sortOrder };
+  await database.favorites.add(structuredClone(stored));
+  return stored;
 }
 export async function unpinFavorite(id: string, database = db) { await database.favorites.delete(id); }
 export async function touchFavorite(id: string, database = db) { await database.favorites.update(id, { lastUsedAt: new Date().toISOString() }); }
+export async function reorderFavorites(ids: string[], database = db) {
+  await database.transaction('rw', database.favorites, async () => {
+    await Promise.all(ids.map((id, sortOrder) => database.favorites.update(id, { sortOrder })));
+  });
+}

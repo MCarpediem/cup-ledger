@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { LedgerDB, clearData, mergedCatalog, pinFavorite, readData, saveRecord, saveSettings, touchFavorite, unpinFavorite } from './db';
+import { LedgerDB, clearData, mergedCatalog, pinFavorite, readData, reorderFavorites, saveRecord, saveSettings, touchFavorite, unpinFavorite } from './db';
 import { catalog } from './catalog';
 import { allSources, defaultSettings, zeroNutrition, type DrinkRecord, type FavoriteDrink } from './model';
 import { aggregate, inRange } from './domain';
@@ -17,6 +17,8 @@ describe('local data services', () => {
     await expect(pinFavorite({ ...favorite('favorite-9'), templateId: 'template-9' }, database)).rejects.toThrow('最多固定 8 个');
     await touchFavorite('favorite-1', database);
     expect((await readData(database)).favorites).toHaveLength(8);
+    await reorderFavorites(['favorite-8', 'favorite-1'], database);
+    expect((await readData(database)).favorites.slice(0, 2).map(item => item.id)).toEqual(['favorite-8', 'favorite-1']);
     await unpinFavorite('favorite-1', database);
     expect((await readData(database)).favorites).toHaveLength(7);
   });

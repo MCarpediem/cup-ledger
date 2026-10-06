@@ -1,9 +1,10 @@
 import { useRef, useState } from 'react';
-import { CalendarDays, Check, ChevronDown, Layers3, X } from 'lucide-react';
+import { Check, ChevronDown, Layers3, X } from 'lucide-react';
 import { categories } from './catalog';
 import { Badge } from './components';
 import { categoryIds, type Category, type DrinkRecord } from './model';
 import styles from './App.module.css';
+import { DateFilter } from './DateFilter';
 
 export function HistoryFilters({ date, onDateChange, category, onCategoryChange, records }: {
   date: string;
@@ -21,17 +22,7 @@ export function HistoryFilters({ date, onDateChange, category, onCategoryChange,
   function choose(value: Category | '') { onCategoryChange(value); close(); }
 
   return <div className={styles.filters}>
-    <label className={styles.filterField}>饮用日期
-      <span className={styles.dateControl}>
-        <CalendarDays size={19} aria-hidden="true" />
-        <span aria-hidden="true" data-testid="date-display" className={!date ? styles.datePlaceholder : undefined}>{date ? date.replaceAll('-', '/') : '年 / 月 / 日'}</span>
-        <input aria-label="饮用日期筛选" type="date" value={date} onChange={event => onDateChange(event.target.value)} onClick={event => {
-          // Keep the native mobile picker, but draw the placeholder/value ourselves:
-          // Android WebViews do not consistently render an empty date input's segments.
-          try { event.currentTarget.showPicker?.(); } catch { /* Native input interaction remains available. */ }
-        }} />
-      </span>
-    </label>
+    <DateFilter value={date} onChange={onDateChange} />
     <div className={styles.filterField}><span id="category-filter-label">饮品类别</span>
       <button ref={trigger} type="button" className={styles.categoryTrigger} aria-label={`饮品类别筛选：${category ? categories[category].name : '全部类别'}`} aria-haspopup="dialog" aria-expanded={open} aria-controls="history-category-dialog" onClick={() => { dialog.current?.showModal(); setOpen(true); }}>
         {category ? <Badge category={category} small /> : <Layers3 size={19} aria-hidden="true" />}

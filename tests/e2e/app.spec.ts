@@ -20,6 +20,10 @@ async function save(page: Page) {
 async function noOverflow(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 }
+async function selectDate(page: Page, date: string) {
+  await page.getByRole('button', { name: /^饮用日期筛选/ }).click();
+  await page.getByRole('dialog', { name: '选择饮用日期' }).getByRole('button', { name: date, exact: true }).click();
+}
 async function seed(page: Page) {
   await page.evaluate(async () => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => { const req = indexedDB.open('cup-ledger'); req.onsuccess = () => resolve(req.result); req.onerror = () => reject(req.error); });
@@ -63,7 +67,7 @@ test('first use, search, configure, save, move to another day, and delete stay c
   await page.getByRole('button', { name: '保存修改' }).click();
   await expect(page.getByRole('progressbar', { name: '咖啡因', exact: true })).toHaveAttribute('aria-valuenow', '0');
   await page.getByRole('link', { name: '记录', exact: true }).click();
-  await page.getByLabel('饮用日期筛选').fill('2026-09-28');
+  await selectDate(page, '2026-09-28');
   await page.getByRole('button', { name: /饮品类别筛选/ }).click();
   await page.getByRole('dialog').getByRole('button', { name: '咖啡', exact: true }).click();
   await expect(page.getByRole('link', { name: '编辑 美式咖啡' })).toHaveCount(1);
@@ -417,27 +421,91 @@ test('bundled Chinese font loads and supporting text stays readable on phones', 
   expect(fontRequests.every(url => new URL(url).origin === 'http://127.0.0.1:4173')).toBeTruthy();
 });
 
-test('date filter shows its placeholder and selected date independently of native mobile rendering', async ({ page }, testInfo) => {
+test('date calendar filters records, clears dates and fits mobile and desktop viewports', async ({ page }, testInfo) => {
   await start(page); await seed(page);
   await page.getByRole('link', { name: '记录', exact: true }).click();
   const display = page.getByTestId('date-display');
-  const input = page.getByLabel('饮用日期筛选');
+  const trigger = page.getByRole('button', { name: /^饮用日期筛选/ });
+  const dialog = page.getByRole('dialog', { name: '选择饮用日期' });
   await expect(display).toHaveText('年 / 月 / 日');
   await expect(display).toBeVisible();
-  await input.fill('2026-09-29');
+  for (const width of [320, 390, 1280]) {
+    await page.setViewportSize({ width, height: 850 });
+    await trigger.click();
+    await expect(dialog).toBeVisible();
+    await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    await expect(dialog.getByRole('button', { name: '2026-09-29', exact: true })).toHaveAttribute('aria-current', 'date');
+    await expect(dialog.getByRole('group', { name: '日期选择' }).getByRole('button')).toHaveCount(42);
+    await noOverflow(page);
+    await dialog.screenshot({ path: testInfo.outputPath(`date-calendar-${width}.png`) });
+    await page.keyboard.press('Escape');
+    await expect(dialog).not.toBeVisible();
+    await expect(trigger).toBeFocused();
+  }
+  await selectDate(page, '2026-09-29');
   await expect(display).toHaveText('2026/09/29');
   await expect(page.getByRole('link', { name: /^编辑 / })).toHaveCount(5);
-  await input.fill('2026-09-28');
+  await expect(trigger).toBeFocused();
+  await trigger.click();
+  await expect(dialog.getByRole('button', { name: '2026-09-29', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await page.keyboard.press('ArrowLeft');
+  await expect(dialog.getByRole('button', { name: '2026-09-28', exact: true })).toBeFocused();
+  await page.keyboard.press('Enter');
   await expect(display).toHaveText('2026/09/28');
   await expect(page.getByRole('link', { name: /^编辑 / })).toHaveCount(0);
-  await page.getByRole('button', { name: '清除筛选' }).click();
-  await expect(input).toHaveValue('');
+  await trigger.click();
+  await dialog.getByRole('button', { name: '清除日期', exact: true }).click();
   await expect(display).toHaveText('年 / 月 / 日');
   await expect(page.getByRole('link', { name: /^编辑 / })).toHaveCount(5);
   await page.evaluate(() => document.fonts.ready);
   await page.screenshot({ path: testInfo.outputPath('record-filters.png'), fullPage: true });
   await page.setViewportSize({ width: 320, height: 720 });
   await noOverflow(page);
+});
+
+test('date calendar navigates months, years and leap days, and today preserves category filtering', async ({ page }) => {
+  await start(page); await seed(page);
+  await page.goto('/records');
+  const trigger = page.getByRole('button', { name: /^饮用日期筛选/ });
+  const dialog = page.getByRole('dialog', { name: '选择饮用日期' });
+  await trigger.click();
+  await dialog.getByRole('button', { name: '选择月份', exact: true }).click();
+  await dialog.getByRole('button', { name: '上一年', exact: true }).click();
+  await dialog.getByRole('button', { name: '上一年', exact: true }).click();
+  await dialog.getByRole('button', { name: '2 月', exact: true }).click();
+  await dialog.getByRole('button', { name: '2024-02-29', exact: true }).click();
+  await expect(page.getByTestId('date-display')).toHaveText('2024/02/29');
+  await trigger.click();
+  await page.keyboard.press('ArrowRight');
+  await expect(dialog.getByRole('button', { name: '2024-03-01', exact: true })).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.getByTestId('date-display')).toHaveText('2024/03/01');
+  await trigger.click();
+  await dialog.getByRole('button', { name: '选择月份', exact: true }).click();
+  await dialog.getByRole('button', { name: '下一年', exact: true }).click();
+  await dialog.getByRole('button', { name: '12 月', exact: true }).click();
+  await dialog.getByRole('button', { name: '下个月', exact: true }).click();
+  await dialog.getByRole('button', { name: '2026-01-01', exact: true }).click();
+  await expect(page.getByTestId('date-display')).toHaveText('2026/01/01');
+  await trigger.click();
+  await dialog.getByRole('button', { name: '上个月', exact: true }).click();
+  await expect(dialog.getByRole('button', { name: '2025-12-31', exact: true })).toBeVisible();
+  await dialog.getByRole('button', { name: '关闭日期选择', exact: true }).click();
+  await expect(trigger).toBeFocused();
+  await page.getByRole('button', { name: /^饮品类别筛选/ }).click();
+  await page.getByRole('dialog').getByRole('button', { name: '咖啡', exact: true }).click();
+  await trigger.click();
+  await dialog.getByRole('button', { name: '今天', exact: true }).click();
+  await expect(page.getByTestId('date-display')).toHaveText('2026/09/29');
+  await expect(page.getByRole('link', { name: /^编辑 / })).toHaveCount(2);
+  await trigger.click();
+  await page.keyboard.press('PageUp');
+  await expect(dialog.getByRole('button', { name: '2026-08-29', exact: true })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await trigger.click();
+  await dialog.getByRole('button', { name: '清除日期', exact: true }).click();
+  await expect(page.getByRole('button', { name: /^饮品类别筛选/ })).toContainText('咖啡');
+  await expect(page.getByRole('link', { name: /^编辑 / })).toHaveCount(2);
 });
 
 test('category sheet filters by selection, shows active state and restores focus on dismissal', async ({ page }, testInfo) => {

@@ -61,7 +61,6 @@
 .dateControl,.categoryTrigger{position:relative;display:flex;align-items:center;gap:8px;width:100%;min-height:54px;padding:12px;border:1px solid var(--line);border-radius:13px;background:var(--surface);color:var(--metric-ink);font-size:16px;font-weight:550;text-align:left}
 .dateControl>span{white-space:nowrap;font-size:15px;letter-spacing:0}
 .datePlaceholder{color:var(--metric-muted);font-weight:500}
-.dateControl input{position:absolute;inset:0;width:100%;height:100%;min-height:0;opacity:0;cursor:pointer;padding:0;border:0}
 .dateControl:focus-within{outline:2px solid var(--accent);outline-offset:2px}
 .categoryTrigger>span:not([aria-hidden]){flex:1;min-width:0;overflow-wrap:anywhere}
 .categoryTrigger[aria-expanded=true]{border-color:var(--accent);background:#F2E7DB}
@@ -206,3 +205,26 @@
 .calendar .badgeSmall{width:34px;height:34px;border-radius:8px;font-size:25px;line-height:1}
 .calendarDay>div{margin-top:8px}
 @media(min-width:700px){.calendar .badgeSmall{width:40px;height:40px;font-size:28px}}
+
+.dateControl>svg:last-child{margin-left:auto}
+.dateControl[aria-expanded=true]{border-color:var(--accent);background:#F2E7DB}
+.dateDialog{inset:0;width:min(400px,calc(100% - 32px));max-height:90dvh;overflow:auto;padding:20px;border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);box-shadow:0 16px 64px #3F332D26}
+.dateDialog::backdrop{background:#3F332D66;backdrop-filter:blur(3px)}
+.dateDialogHeader{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.dateDialogHeader h2{font-size:20px}
+.dateMonthHeading{display:flex;align-items:center;justify-content:space-between;gap:6px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.dateMonthToggle{display:flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:4px 8px;border:0;background:transparent;color:var(--accent);font-size:17px;font-weight:650}
+.dateWeekdays,.dateDays{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;text-align:center}
+.dateWeekdays{padding:14px 0 8px;color:var(--muted);font-size:13px}
+.dateDays button{position:relative;min-width:0;height:40px;padding:0;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--ink);font-size:15px;font-weight:550}
+.dateDays .dateOutside{color:#A89A8D}
+.dateDays button:hover{background:#F0E4D7}
+.dateDays button[aria-current=date]{border-color:#C6A58D;color:var(--accent);font-weight:700}
+.dateDays button[aria-pressed=true]{background:var(--accent);color:var(--surface);font-weight:700;border-color:var(--accent)}
+.dateDays button:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
+.dateDialogFooter{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
+.dateTodayButton{min-height:40px;padding:8px 18px;border:1px solid #D8BDA7;border-radius:8px;background:#F0E4D7;color:var(--accent);font-size:15px;font-weight:600}
+.dateMonths{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:20px 0}
+.dateMonths button{min-height:48px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--ink);font-size:15px}
+.dateMonths button[aria-pressed=true]{background:#F0E4D7;border-color:var(--accent);color:var(--accent);font-weight:650}
+@media(max-width:600px){.dateDialog{inset:auto 0 0;margin:0 auto;width:100%;padding:12px 20px calc(24px + env(safe-area-inset-bottom));border-radius:20px 20px 0 0}.dateDialogHeader{margin-bottom:12px}}

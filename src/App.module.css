@@ -202,3 +202,7 @@
 .intakeGrid .metric_protein p,.periodMetrics .metric_protein p{color:#667052}
 .intakeGrid .metric_calories p,.periodMetrics .metric_calories p{color:#9A6944}
 .intakeGrid .metric_alcohol p,.periodMetrics .metric_alcohol p{color:#765568}
+
+.calendar .badgeSmall{width:34px;height:34px;border-radius:8px;font-size:25px;line-height:1}
+.calendarDay>div{margin-top:8px}
+@media(min-width:700px){.calendar .badgeSmall{width:40px;height:40px;font-size:28px}}

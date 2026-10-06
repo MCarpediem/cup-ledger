@@ -154,7 +154,7 @@ test('alcohol manual override survives volume and ABV changes and can return to 
   await save(page);
   await expect(page.getByRole('link', { name: '编辑 啤酒' })).toContainText('纯酒精 39.5 g');
 });
-test('week/month calendars deduplicate drinks, show overflow, and year has no calendar', async ({ page }, testInfo) => {
+test('week/month calendars show one proportionate drink icon, and year has no calendar', async ({ page }, testInfo) => {
   await start(page); await seed(page);
   await noOverflow(page);
   await page.screenshot({ path: testInfo.outputPath('today-mobile.png'), fullPage: true });
@@ -162,6 +162,23 @@ test('week/month calendars deduplicate drinks, show overflow, and year has no ca
   const day = page.getByRole('button', { name: '2026-09-29，4 种饮品', exact: true });
   await expect(day).toBeVisible();
   await expect(day.locator('[title]')).toHaveCount(1);
+  const originalViewport = page.viewportSize()!;
+  for (const width of [320, 390, 1280]) {
+    await page.setViewportSize({ width, height: 850 });
+    const badge = day.locator('[aria-hidden="true"]');
+    await expect(badge).toHaveCSS('width', width >= 700 ? '40px' : '34px');
+    await expect(badge).toHaveCSS('height', width >= 700 ? '40px' : '34px');
+    await expect(badge).toHaveCSS('font-size', width >= 700 ? '28px' : '25px');
+    const iconBounds = (await badge.boundingBox())!;
+    const dayBounds = (await day.boundingBox())!;
+    expect(iconBounds.x).toBeGreaterThanOrEqual(dayBounds.x);
+    expect(iconBounds.x + iconBounds.width).toBeLessThanOrEqual(dayBounds.x + dayBounds.width);
+    expect(iconBounds.y).toBeGreaterThanOrEqual(dayBounds.y + 24);
+    expect(iconBounds.y + iconBounds.height).toBeLessThanOrEqual(dayBounds.y + dayBounds.height);
+    await noOverflow(page);
+    await page.getByRole('region', { name: '周日历' }).screenshot({ path: testInfo.outputPath(`calendar-${width}.png`) });
+  }
+  await page.setViewportSize(originalViewport);
   await page.getByRole('button', { name: '月', exact: true }).click();
   await expect(day.locator('[title]')).toHaveCount(1);
   await day.click();

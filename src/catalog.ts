@@ -3,7 +3,7 @@ import { allSources, zeroNutrition, type Beverage, type Category, type Nutrition
 export const categories: Record<Category, { name: string; icon: string; color: string; background: string }> = {
   other: { name: '其他种类', icon: '🥤', color: '#978E80', background: '#EDE8E0' },
   water: { name: '水', icon: '💧', color: '#789EAA', background: '#E5EFF0' },
-  coffee: { name: '咖啡', icon: '☕', color: '#99725D', background: '#D9E5F0' },
+  coffee: { name: '咖啡', icon: '☕', color: '#99725D', background: '#D3B59D' },
   tea: { name: '茶', icon: '🍵', color: '#879A72', background: '#E7EDE1' },
   milk: { name: '牛奶', icon: '🥛', color: '#C5AA82', background: '#F3EBDD' },
   juice: { name: '果汁', icon: '🍊', color: '#C48866', background: '#F4E3D8' },

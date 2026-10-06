@@ -18,8 +18,8 @@ export function CategoryPicker({ value, onChange, disabled = false }: {
 
   return <div className={styles.filterField}>
     <span>类别</span>
-    <button ref={trigger} type="button" disabled={disabled} className={`${styles.categoryTrigger} ${styles.formCategoryTrigger}`} aria-label={`饮品类别：${categories[value].name}`} aria-haspopup="dialog" aria-expanded={open} aria-controls={id} onClick={() => { dialog.current?.showModal(); setOpen(true); }}>
-      <Badge category={value} /><span>{categories[value].name}</span><ChevronDown size={18} aria-hidden="true" />
+    <button ref={trigger} type="button" disabled={disabled} className={styles.categoryTrigger} aria-label={`饮品类别：${categories[value].name}`} aria-haspopup="dialog" aria-expanded={open} aria-controls={id} onClick={() => { dialog.current?.showModal(); setOpen(true); }}>
+      <span>{categories[value].name}</span><ChevronDown size={18} aria-hidden="true" />
     </button>
     <dialog ref={dialog} id={id} className={styles.categoryDialog} aria-labelledby={`${id}-title`} onClose={() => { setOpen(false); trigger.current?.focus(); }} onClick={event => {
       if (event.target !== event.currentTarget) return;

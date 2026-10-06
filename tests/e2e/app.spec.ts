@@ -162,7 +162,7 @@ test('week/month calendars show one proportionate drink icon, and year has no ca
   const day = page.getByRole('button', { name: '2026-09-29，4 种饮品', exact: true });
   await expect(day).toBeVisible();
   await expect(day.locator('[title]')).toHaveCount(1);
-  await expect(day.locator('[aria-hidden="true"]')).toHaveCSS('background-color', 'rgb(217, 229, 240)');
+  await expect(day.locator('[aria-hidden="true"]')).toHaveCSS('background-color', 'rgb(211, 181, 157)');
   expect(await day.locator('[aria-hidden="true"]').evaluate(el => getComputedStyle(el).backgroundColor)).not.toBe(await day.evaluate(el => getComputedStyle(el).backgroundColor));
   const originalViewport = page.viewportSize()!;
   for (const width of [320, 390, 1280]) {
@@ -197,21 +197,23 @@ test('week/month calendars show one proportionate drink icon, and year has no ca
   await noOverflow(page);
 });
 
-test('custom drink categories use icons, restore focus and persist while builtin categories stay locked', async ({ page }, testInfo) => {
+test('custom category field uses text while its picker keeps icons, focus and persistence', async ({ page }, testInfo) => {
   await start(page);
   await page.goto('/templates/new');
   await page.getByRole('textbox', { name: '饮品名称' }).fill('我的图标分类茶');
   const trigger = page.getByRole('button', { name: /^饮品类别：/ });
-  await expect(trigger).toContainText('咖啡');
-  await expect(trigger.locator('[aria-hidden="true"]').first()).toHaveCSS('background-color', 'rgb(217, 229, 240)');
+  await expect(trigger).toHaveText('咖啡');
+  await expect(trigger.locator('span[aria-hidden="true"]')).toHaveCount(0);
   for (const width of [320, 390, 1280]) {
     await page.setViewportSize({ width, height: 850 });
+    await trigger.screenshot({ path: testInfo.outputPath(`custom-category-field-${width}.png`) });
     await trigger.click();
     const dialog = page.getByRole('dialog', { name: '选择饮品类别' });
     const options = dialog.getByRole('group', { name: '饮品类别选项' }).getByRole('button');
     await expect(options).toHaveCount(11);
     await expect(options.locator('span[aria-hidden="true"]')).toHaveCount(11);
     await expect(dialog.getByRole('button', { name: '咖啡', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await expect(dialog.getByRole('button', { name: '咖啡', exact: true }).locator('span[aria-hidden="true"]')).toHaveCSS('background-color', 'rgb(211, 181, 157)');
     await noOverflow(page);
     await dialog.screenshot({ path: testInfo.outputPath(`custom-categories-${width}.png`) });
     await page.keyboard.press('Escape');
@@ -236,7 +238,8 @@ test('custom drink categories use icons, restore focus and persist while builtin
   await page.getByRole('button', { name: '保存饮品', exact: true }).click();
   await page.getByRole('link').filter({ has: page.getByRole('heading', { name: '我的图标分类茶', exact: true }) }).click();
   await page.reload();
-  await expect(trigger).toContainText('茶');
+  await expect(trigger).toHaveText('茶');
+  await expect(trigger.locator('span[aria-hidden="true"]')).toHaveCount(0);
   await page.goto('/templates/coffee-americano');
   await expect(trigger).toBeDisabled();
 });

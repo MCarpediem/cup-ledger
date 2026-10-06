@@ -162,6 +162,8 @@ test('week/month calendars show one proportionate drink icon, and year has no ca
   const day = page.getByRole('button', { name: '2026-09-29，4 种饮品', exact: true });
   await expect(day).toBeVisible();
   await expect(day.locator('[title]')).toHaveCount(1);
+  await expect(day.locator('[aria-hidden="true"]')).toHaveCSS('background-color', 'rgb(217, 229, 240)');
+  expect(await day.locator('[aria-hidden="true"]').evaluate(el => getComputedStyle(el).backgroundColor)).not.toBe(await day.evaluate(el => getComputedStyle(el).backgroundColor));
   const originalViewport = page.viewportSize()!;
   for (const width of [320, 390, 1280]) {
     await page.setViewportSize({ width, height: 850 });
@@ -193,6 +195,50 @@ test('week/month calendars show one proportionate drink icon, and year has no ca
   await page.getByRole('button', { name: '上一个周期' }).click();
   await expect(page.getByText('日均按 365 个自然日计算，包含没有记录的日期。')).toBeVisible();
   await noOverflow(page);
+});
+
+test('custom drink categories use icons, restore focus and persist while builtin categories stay locked', async ({ page }, testInfo) => {
+  await start(page);
+  await page.goto('/templates/new');
+  await page.getByRole('textbox', { name: '饮品名称' }).fill('我的图标分类茶');
+  const trigger = page.getByRole('button', { name: /^饮品类别：/ });
+  await expect(trigger).toContainText('咖啡');
+  await expect(trigger.locator('[aria-hidden="true"]').first()).toHaveCSS('background-color', 'rgb(217, 229, 240)');
+  for (const width of [320, 390, 1280]) {
+    await page.setViewportSize({ width, height: 850 });
+    await trigger.click();
+    const dialog = page.getByRole('dialog', { name: '选择饮品类别' });
+    const options = dialog.getByRole('group', { name: '饮品类别选项' }).getByRole('button');
+    await expect(options).toHaveCount(11);
+    await expect(options.locator('span[aria-hidden="true"]')).toHaveCount(11);
+    await expect(dialog.getByRole('button', { name: '咖啡', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await noOverflow(page);
+    await dialog.screenshot({ path: testInfo.outputPath(`custom-categories-${width}.png`) });
+    await page.keyboard.press('Escape');
+    await expect(dialog).not.toBeVisible();
+    await expect(trigger).toBeFocused();
+  }
+  await trigger.click();
+  await page.getByRole('dialog').getByRole('button', { name: '水', exact: true }).click();
+  const plainWater = page.getByRole('checkbox', { name: /计入水/ });
+  await plainWater.check();
+  await trigger.click();
+  await page.getByRole('dialog').getByRole('button', { name: '茶', exact: true }).click();
+  await trigger.click();
+  await page.getByRole('dialog').getByRole('button', { name: '水', exact: true }).click();
+  await expect(plainWater).not.toBeChecked();
+  await trigger.click();
+  await page.getByRole('dialog').getByRole('button', { name: '酒精饮品', exact: true }).click();
+  await expect(page.getByRole('spinbutton', { name: '酒精度 ABV', exact: true })).toBeVisible();
+  await trigger.click();
+  await page.getByRole('dialog').getByRole('button', { name: '茶', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '创建自定义饮品' })).toBeVisible();
+  await page.getByRole('button', { name: '保存饮品', exact: true }).click();
+  await page.getByRole('link').filter({ has: page.getByRole('heading', { name: '我的图标分类茶', exact: true }) }).click();
+  await page.reload();
+  await expect(trigger).toContainText('茶');
+  await page.goto('/templates/coffee-americano');
+  await expect(trigger).toBeDisabled();
 });
 test('all local data clearing requires two confirmations and resets onboarding', async ({ page }) => {
   await start(page); await choose(page, '水'); await save(page);

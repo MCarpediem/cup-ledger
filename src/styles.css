@@ -4,5 +4,5 @@
 
 :root{letter-spacing:.025em;line-height:1.65;--other:#978E80;--other-bg:#EDE8E0}button,input,select{letter-spacing:inherit}h3{line-height:1.6}
 
-:root{--metric-ink:#78604F;--metric-label:#7D695B;--metric-muted:#796B5E}
+:root{--metric-ink:#78604F;--metric-label:#7D695B;--metric-muted:#796B5E;--coffee-bg:#D9E5F0}
 body:has(dialog[open]){overflow:hidden}

@@ -49,6 +49,12 @@ test('first use, search, configure, save, move to another day, and delete stay c
   await expect(page.getByRole('progressbar', { name: '咖啡因', exact: true })).toHaveAttribute('aria-valuenow', '280');
   await expect(page.getByRole('progressbar', { name: '水', exact: true })).toHaveAttribute('aria-valuenow', '0');
   await page.getByRole('link', { name: '统计', exact: true }).click();
+  const metricPicker = page.getByRole('button', { name: /水.*ml/ });
+  await expect(metricPicker).toBeVisible();
+  await metricPicker.click();
+  await expect(page.getByRole('listbox', { name: '选择统计指标' })).toBeVisible();
+  await page.getByRole('option', { name: /咖啡因.*mg/ }).click();
+  await expect(page.getByRole('button', { name: /咖啡因.*mg/ })).toBeVisible();
   await expect(page.getByText('日均按 2 个自然日计算，截至今天。')).toBeVisible();
   await expect(page.getByText('日均 140 mg', { exact: true })).toBeVisible();
   await page.getByRole('link', { name: '记录', exact: true }).click();

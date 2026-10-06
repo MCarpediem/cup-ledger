@@ -51,7 +51,7 @@ export function MetricSummary({ totals, settings }: { totals: Totals; settings: 
         <p className={styles.metricHint}>{key === 'water' ? remaining > 0 ? `还差 ${pretty(remaining)} ml` : '今日目标已达成' : `${state === 'near' ? '接近参考线 · ' : ''}${remaining >= 0 ? '剩余' : '超出'} ${pretty(Math.abs(remaining))} ${metricInfo[key].unit}`}<span>/ {pretty(goal)}</span></p>
       </div>;
     })}</div>
-    <div className={styles.intakeGrid}>{(['protein', 'calories', 'alcohol'] as const).map(key => <div key={key}><span>{metricInfo[key].label}</span><p>{pretty(totals[key].value)} <small>{metricInfo[key].unit}</small></p>{totals[key].incomplete && <small>合计不完整</small>}</div>)}</div>
+    <div className={styles.intakeGrid}>{(['protein', 'calories', 'alcohol'] as const).map(key => <div key={key} className={styles[`metric_${key}`]}><span>{metricInfo[key].label}</span><p>{pretty(totals[key].value)} <small>{metricInfo[key].unit}</small></p>{totals[key].incomplete && <small>合计不完整</small>}</div>)}</div>
   </section>;
 }
 export function RecordList({ records }: { records: DrinkRecord[] }) {

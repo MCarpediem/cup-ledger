@@ -137,3 +137,62 @@
  .recordHeading h3{font-size:18px}.volumePill,.specPill{font-size:14px}
 }
 @media(max-width:360px){.recordNutrients{grid-template-columns:repeat(2,minmax(0,1fr))}.recordAction{font-size:12px}}
+
+/* Visual refresh: tighter onboarding, clearer metric hierarchy, and calmer cards. */
+.onboardingIcon{font-size:42px;line-height:1;display:block;margin:22px 0 12px;transform:scaleY(.82);transform-origin:center}
+.hero{min-height:178px;padding:20px 26px}
+.cupIllustration{width:145px}
+.metricLabel>span:first-child,.intakeGrid>div>span,.periodMetrics>div>span{font-size:16px;font-weight:650;color:#765B4C}
+.metricLabel>span+span{font-size:13px;font-weight:500;color:#9A8170;letter-spacing:.01em}
+.metricValue,.intakeGrid p,.periodMetrics p{color:#6F5040;font-weight:650}
+.metricValue small,.intakeGrid small,.periodMetrics p small{color:#8A7162;font-size:15px;font-weight:500}
+.metricHint,.periodMetrics>div>small{color:#917868;font-size:14px;font-weight:500}
+.metricHint>span{color:#AA9181;font-size:13px}
+.metric_water .metricLabel>span:first-child{color:#66584F}.metric_water .metricValue,.metric_water .intakeGrid p{color:#765B4C}
+.metric_caffeine .metricLabel>span:first-child{color:#66584F}.metric_caffeine .metricValue,.metric_caffeine .intakeGrid p{color:#814E48}
+.metric_sugar .metricLabel>span:first-child{color:#66584F}.metric_sugar .metricValue,.metric_sugar .intakeGrid p{color:#87453F}
+.metric_protein .metricLabel>span:first-child{color:#66584F}.metric_protein .metricValue,.metric_protein .intakeGrid p{color:#667052}
+.metric_calories .metricLabel>span:first-child{color:#66584F}.metric_calories .metricValue,.metric_calories .intakeGrid p{color:#9A6944}
+.metric_alcohol .metricLabel>span:first-child{color:#66584F}.metric_alcohol .metricValue,.metric_alcohol .intakeGrid p{color:#765568}
+.record{padding:18px;margin:10px 0;border:1px solid #E7D8C9;border-radius:18px;background:#FFF9F2;box-shadow:0 6px 18px #7B5A4610}
+.record:hover{background:#FFF9F2;border-color:#D8BDA7;box-shadow:0 8px 22px #7B5A4618}
+.recordTop{gap:13px}
+.recordTop>.badge{width:52px;height:52px;border-radius:15px;font-size:25px}
+.recordHeading h3{color:#4B3A32}
+.recordMeta{gap:6px;margin-top:7px}
+.volumePill,.specPill{background:#F2E7DC;color:#765B4C}
+.specPill{background:#F8EFE7;color:#8A6C59}
+.recordNutrients{margin:15px 0 13px;padding:13px 11px;background:#FBF5EE;border:1px solid #F0E4D8}
+.recordFooter{padding-top:2px}
+.favoritesPanel{padding:19px;background:#F0E4D7;border:1px solid #E6D4C2}
+.favoriteMain{min-height:78px;padding:12px 34px 12px 12px;gap:11px}
+.favoriteMain .badge{width:48px;height:48px;aspect-ratio:1;border-radius:14px;font-size:22px;flex:0 0 48px}
+.favoriteMain strong{font-size:16px;line-height:1.45;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
+.favoriteMain small{font-size:14px;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
+.favoriteMain>svg{flex:0 0 auto}
+.chartSelect{position:relative;display:flex;align-items:center;justify-content:space-between;gap:14px;color:#765B4C;font-weight:600}
+.metricPicker{position:relative;width:210px}
+.metricSelectButton{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;min-height:48px;padding:10px 12px;border:1px solid #D8C2AF;border-radius:13px;background:#FFF9F2;color:#6F5040;font-size:16px;font-weight:650;box-shadow:0 3px 10px #7B5A460D}
+.metricSelectButton small{font-size:14px;color:#967A69;font-weight:500;margin-left:auto}
+.metricSelectButton svg{color:#9B725A;transition:transform .16s ease}
+.metricSelectButton[aria-expanded=true] svg{transform:rotate(180deg)}
+.metricMenu{position:absolute;z-index:5;top:calc(100% + 7px);right:0;width:100%;padding:6px;border:1px solid #DECBB9;border-radius:14px;background:#FFF9F2;box-shadow:0 12px 30px #5E44331F}
+.metricMenu button{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:10px 11px;border:0;border-radius:9px;background:transparent;color:#6F5040;text-align:left;font-size:15px}
+.metricMenu button:hover,.metricMenu button[aria-selected=true]{background:#F2E5D9;color:#814E48}
+.metricMenu button small{font-size:13px;color:#967A69;margin-left:3px}
+.metricMenu button svg{color:#8B4F3D}
+@media(max-width:600px){
+ .hero{min-height:168px;padding:18px 17px}.cupIllustration{width:104px;margin-right:-8px}
+ .record{padding:16px;margin:8px 0;border-radius:16px}.recordTop>.badge{width:48px;height:48px;flex-basis:48px}
+ .favoriteGrid{grid-template-columns:1fr}.favoriteMain{min-height:74px}
+ .metricPicker{width:190px}
+}
+@media(max-width:360px){.metricPicker{width:170px}.metricSelectButton{font-size:15px}.metricMenu button{font-size:14px}}
+.metricLabel>span:first-child,.intakeGrid>div>span,.periodMetrics>div>span{color:#66584F}
+.metricHint,.periodMetrics>div>small{font-size:15px}
+.intakeGrid .metric_water p,.periodMetrics .metric_water p{color:#78604F}
+.intakeGrid .metric_caffeine p,.periodMetrics .metric_caffeine p{color:#814E48}
+.intakeGrid .metric_sugar p,.periodMetrics .metric_sugar p{color:#87453F}
+.intakeGrid .metric_protein p,.periodMetrics .metric_protein p{color:#667052}
+.intakeGrid .metric_calories p,.periodMetrics .metric_calories p{color:#9A6944}
+.intakeGrid .metric_alcohol p,.periodMetrics .metric_alcohol p{color:#765568}

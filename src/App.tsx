@@ -1,6 +1,6 @@
-import { Component, Suspense, useEffect, type ReactNode } from 'react';
+import { Component, Suspense, useEffect, useLayoutEffect, type ReactNode } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Link, NavLink, Route, Routes, useLocation, useParams, useSearchParams } from 'react-router-dom';
+import { Link, NavLink, Route, Routes, useLocation, useNavigationType, useParams, useSearchParams } from 'react-router-dom';
 import { BookOpen, ChartNoAxesCombined, CupSoda, CalendarDays, UserRound } from 'lucide-react';
 import { readData } from './db';
 import { DataContext, useData } from './components';
@@ -18,7 +18,43 @@ export function App() { return <ErrorBoundary><Ledger /></ErrorBoundary>; }
 function Ledger() {
   const data = useLiveQuery(() => readData(), []);
   const location = useLocation();
-  useEffect(() => { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); }, [location.pathname, location.search]);
+  const navigationType = useNavigationType();
+  const scrollKey = `cup-ledger:scroll:${location.key}`;
+  const pathScrollKey = `cup-ledger:scroll:path:${location.pathname}${location.search}`;
+  useEffect(() => {
+    function saveScroll() {
+      try {
+        const value = String(window.scrollY);
+        sessionStorage.setItem(scrollKey, value);
+        sessionStorage.setItem(pathScrollKey, value);
+      } catch { /* Storage may be unavailable in private WebViews. */ }
+    }
+    function handleLinkClick(event: MouseEvent) {
+      const target = event.target instanceof Element ? event.target.closest('a') : null;
+      const href = target?.getAttribute('href');
+      if (href?.startsWith('/')) saveScroll();
+    }
+    function handleScroll() { saveScroll(); }
+    document.addEventListener('click', handleLinkClick, true);
+    document.addEventListener('pointerdown', handleLinkClick, true);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => { document.removeEventListener('click', handleLinkClick, true); document.removeEventListener('pointerdown', handleLinkClick, true); window.removeEventListener('scroll', handleScroll); };
+  }, [pathScrollKey, scrollKey]);
+  useLayoutEffect(() => {
+    window.history.scrollRestoration = 'manual';
+    let restore = 0;
+    if (navigationType === 'POP') {
+      try { restore = Number(sessionStorage.getItem(pathScrollKey) ?? sessionStorage.getItem(scrollKey) ?? 0); } catch { restore = 0; }
+    }
+    const target = Number.isFinite(restore) ? restore : 0;
+    window.scrollTo({ top: target, left: 0, behavior: 'auto' });
+    const frame = requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo({ top: target, left: 0, behavior: 'auto' })));
+    const timer = window.setTimeout(() => window.scrollTo({ top: target, left: 0, behavior: 'auto' }), 100);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+    };
+  }, [pathScrollKey, scrollKey, navigationType]);
   if (!data) return <main className={styles.loading} role="status">正在翻开你的饮品日记…</main>;
   const mainPage = ['/', '/records', '/stats', '/profile'].includes(location.pathname);
   if (!data.settings.onboarded) return <main className={styles.app}><Goals initial={data.settings} onboarding /></main>;

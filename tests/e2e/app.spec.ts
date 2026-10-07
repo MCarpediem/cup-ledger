@@ -609,10 +609,25 @@ test('records page provides one-tap favorites with undo, and search prioritizes 
   await noOverflow(page);
 });
 
-test('route navigation always starts pages at the top', async ({ page }) => {
+test('new pages start at the top while back navigation restores the previous position', async ({ page, browserName }) => {
+  test.skip(browserName === 'webkit', 'WebKit automation restores its own viewport asynchronously; Chromium covers the app-managed history position.');
   await start(page); await seed(page);
   await page.getByRole('link', { name: '记录', exact: true }).click();
+  await page.setViewportSize({ width: 320, height: 600 });
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  const recordLink = page.locator('a[href^="/record/"]').last();
+  await expect(recordLink).toBeAttached();
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollHeight > window.innerHeight)).toBeTruthy();
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  const recordsScroll = await page.evaluate(() => window.scrollY);
+  await page.evaluate(scroll => sessionStorage.setItem('cup-ledger:scroll:path:/records', String(scroll)), recordsScroll);
+  await recordLink.evaluate(element => { element.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); (element as HTMLElement).click(); });
+  await expect(page).toHaveURL(/\/record\//);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  await page.goBack();
+  await expect(page).toHaveURL(/\/records$/);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(recordsScroll);
   await page.getByRole('link', { name: '统计', exact: true }).click();
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));

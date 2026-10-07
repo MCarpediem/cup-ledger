@@ -1,4 +1,4 @@
-import { Component, Suspense, type ReactNode } from 'react';
+import { Component, Suspense, useEffect, type ReactNode } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link, NavLink, Route, Routes, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { BookOpen, ChartNoAxesCombined, CupSoda, CalendarDays, UserRound } from 'lucide-react';
@@ -18,6 +18,7 @@ export function App() { return <ErrorBoundary><Ledger /></ErrorBoundary>; }
 function Ledger() {
   const data = useLiveQuery(() => readData(), []);
   const location = useLocation();
+  useEffect(() => { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); }, [location.pathname, location.search]);
   if (!data) return <main className={styles.loading} role="status">正在翻开你的饮品日记…</main>;
   const mainPage = ['/', '/records', '/stats', '/profile'].includes(location.pathname);
   if (!data.settings.onboarded) return <main className={styles.app}><Goals initial={data.settings} onboarding /></main>;

@@ -61,9 +61,6 @@ export const catalog: Beverage[] = [
   drink('alcohol-wine', '葡萄酒', 'alcohol', 150, n(0, 0.6, 0.1, 85), { abv: 12 }),
   drink('alcohol-baijiu', '白酒', 'alcohol', 50, n(0, 0, 0, 295), { abv: 52 }),
   drink('alcohol-cocktail', '调制鸡尾酒', 'alcohol', 200, n(0, null, null, null), { abv: null, note: '配方差异较大，请填写酒精度和成分；缺失值不会作为 0。' }),
-  drink('product-kangshifu-iced-tea', '冰红茶', 'tea', 500, n(0, 8.8, 0, 37), { kind: 'product', brand: '康师傅', packageLabel: '500 ml 瓶装', searchTerms: ['康师傅', '冰红茶', '红茶饮料'], note: '包装标签参考值；不同地区版本请以瓶身标签为准。' }),
-  drink('product-wahaha-ad-milk', 'AD 钙奶', 'milk', 220, n(0, 8.6, 1.2, 54), { kind: 'product', brand: '娃哈哈', packageLabel: '220 ml 瓶装', searchTerms: ['娃哈哈', '哇哈哈', 'AD钙奶', '钙奶'], note: '包装标签参考值；不同地区版本请以瓶身标签为准。' }),
   drink('product-coca-cola', '可口可乐', 'soda', 330, n(10, 10.6, 0, 42), { kind: 'product', brand: '可口可乐', packageLabel: '330 ml 罐装', searchTerms: ['可口', '可乐', 'coca cola'], note: '包装标签参考值；不同地区版本请以罐身标签为准。' }),
   drink('product-pepsi-cola', '百事可乐', 'soda', 330, n(10, 10.9, 0, 43), { kind: 'product', brand: '百事', packageLabel: '330 ml 罐装', searchTerms: ['百事', '百事可乐', 'pepsi'], note: '包装标签参考值；不同地区版本请以罐身标签为准。' }),
-  drink('product-kumquat-lemon', '金桔柠檬', 'juice', 700, n(0, 7, 0, 32), { kind: 'product', brand: '通用配方', packageLabel: '700 ml 杯装 · 标准糖', searchTerms: ['金桔', '柠檬', '金桔柠檬'], sweetenable: true, note: '门店通用配方估算；甜度变化后请核对实际配方。' }),
 ];

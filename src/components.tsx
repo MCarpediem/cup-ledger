@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
 import { ArrowLeft, ArrowUpRight, Coffee, Plus } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { categories } from './catalog';
 import { aggregate, dayKey, pretty, referenceState, type Totals } from './domain';
@@ -27,8 +27,15 @@ export function Badge({ category, small = false }: { category: Category; small?:
 export function Header({ title, eyebrow, action }: { title: string; eyebrow?: string; action?: ReactNode }) {
   return <header className={styles.header}><div>{eyebrow && <p className={styles.eyebrow}>{eyebrow}</p>}<h1>{title}</h1></div>{action}</header>;
 }
-export function BackHeader({ title, to = '/' }: { title: string; to?: string }) {
-  return <header className={styles.backHeader}><Link to={to} className={styles.iconButton} aria-label="返回"><ArrowLeft size={22} /></Link><h1>{title}</h1><span className={styles.wordmark}>杯记</span></header>;
+export function BackHeader({ title, to = '/', useHistoryBack = false }: { title: string; to?: string; useHistoryBack?: boolean }) {
+  const navigate = useNavigate();
+  function goBack(event: ReactMouseEvent<HTMLAnchorElement>) {
+    event.preventDefault();
+    const historyIndex = window.history.state?.idx;
+    if (useHistoryBack && (typeof historyIndex === 'number' ? historyIndex > 0 : window.history.length > 1)) navigate(-1);
+    else navigate(to);
+  }
+  return <header className={styles.backHeader}><Link to={to} data-history-back={useHistoryBack ? 'true' : undefined} onClick={goBack} className={styles.iconButton} aria-label="返回"><ArrowLeft size={22} /></Link><h1>{title}</h1><span className={styles.wordmark}>杯记</span></header>;
 }
 export function AddButton({ compact = false }: { compact?: boolean }) {
   const { pathname } = useLocation();

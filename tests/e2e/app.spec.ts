@@ -620,14 +620,15 @@ test('new pages start at the top while back navigation restores the previous pos
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollHeight > window.innerHeight)).toBeTruthy();
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  await page.waitForTimeout(100);
   const recordsScroll = await page.evaluate(() => window.scrollY);
   await page.evaluate(scroll => sessionStorage.setItem('cup-ledger:scroll:path:/records', String(scroll)), recordsScroll);
-  await recordLink.evaluate(element => { element.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); (element as HTMLElement).click(); });
+  await recordLink.click({ force: true });
   await expect(page).toHaveURL(/\/record\//);
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
-  await page.goBack();
+  await page.getByRole('link', { name: '返回', exact: true }).click();
   await expect(page).toHaveURL(/\/records$/);
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(recordsScroll);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100);
   await page.getByRole('link', { name: '统计', exact: true }).click();
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));

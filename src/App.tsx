@@ -32,13 +32,10 @@ function Ledger() {
     function handleLinkClick(event: MouseEvent) {
       const target = event.target instanceof Element ? event.target.closest('a') : null;
       const href = target?.getAttribute('href');
-      if (href?.startsWith('/')) saveScroll();
+      if (href?.startsWith('/') && target?.getAttribute('data-history-back') !== 'true') saveScroll();
     }
-    function handleScroll() { saveScroll(); }
     document.addEventListener('click', handleLinkClick, true);
-    document.addEventListener('pointerdown', handleLinkClick, true);
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => { document.removeEventListener('click', handleLinkClick, true); document.removeEventListener('pointerdown', handleLinkClick, true); window.removeEventListener('scroll', handleScroll); };
+    return () => { document.removeEventListener('click', handleLinkClick, true); };
   }, [pathScrollKey, scrollKey]);
   useLayoutEffect(() => {
     window.history.scrollRestoration = 'manual';

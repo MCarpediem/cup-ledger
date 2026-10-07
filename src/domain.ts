@@ -4,6 +4,21 @@ import { nutrientKeys, type Basis, type Beverage, type DrinkRecord, type Metric,
 export const dayKey = (date = new Date()) => format(date, 'yyyy-MM-dd');
 export const localInputTime = (date = new Date()) => format(date, "yyyy-MM-dd'T'HH:mm");
 export const pretty = (value: number) => new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 1 }).format(value);
+export function newId() {
+  if (typeof globalThis.crypto?.randomUUID === 'function') return globalThis.crypto.randomUUID();
+  if (typeof globalThis.crypto?.getRandomValues === 'function') {
+    const bytes = globalThis.crypto.getRandomValues(new Uint8Array(16));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = [...bytes].map(byte => byte.toString(16).padStart(2, '0')).join('');
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+export function cloneValue<T>(value: T): T {
+  if (typeof structuredClone === 'function') return structuredClone(value);
+  return JSON.parse(JSON.stringify(value)) as T;
+}
 export function convertNutrition(nutrition: Nutrition, volume: number, from: Basis, to: Basis): Nutrition {
   const factor = from === to ? 1 : from === '100ml' ? volume / 100 : 100 / volume;
   return Object.fromEntries(nutrientKeys.map(key => [key, nutrition[key] === null ? null : nutrition[key]! * factor])) as Nutrition;

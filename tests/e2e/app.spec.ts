@@ -78,6 +78,13 @@ test('first use, search, configure, save, move to another day, and delete stay c
   await page.getByRole('link', { name: '统计', exact: true }).click();
   await expect(page.getByRole('heading', { name: '这段时间，还没有记录' })).toBeVisible();
 });
+test('saving still works when randomUUID is unavailable on a LAN HTTP origin', async ({ page }) => {
+  await start(page);
+  await page.evaluate(() => Object.defineProperty(globalThis.crypto, 'randomUUID', { configurable: true, value: undefined }));
+  await choose(page, '水');
+  await save(page);
+  await expect(page.getByRole('progressbar', { name: '水', exact: true })).toHaveAttribute('aria-valuenow', '250');
+});
 test('plain water qualifies, sparkling water does not, and loaded app works offline', async ({ page, context }) => {
   await start(page);
   await context.setOffline(true);

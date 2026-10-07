@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Check, ChevronRight, GlassWater, Minus, Plus, Wine } from 'lucide-react';
 import { categories } from './catalog';
 import { db, pinFavorite, saveRecord } from './db';
-import { alcoholGrams, convertNutrition, dayKey, localInputTime, pretty, specificationNutrition, validateRecord } from './domain';
+import { alcoholGrams, convertNutrition, dayKey, localInputTime, newId, pretty, specificationNutrition, validateRecord } from './domain';
 import { allSources, metricInfo, zeroNutrition, type Basis, type Beverage, type Category, type DrinkRecord, type FavoriteDrink, type Nutrition } from './model';
 import { BackHeader, Badge, ErrorMessage, errorText } from './components';
 import styles from './App.module.css';
@@ -64,10 +64,10 @@ export function DrinkForm({ template, record, templateMode = false, reselected =
     try {
       const effectivePlain = category === 'water' && plainWater;
       const savedSources = { ...sources, alcohol: alcoholManual ? 'manual' as const : 'estimated' as const };
-      const templateId = template?.id ?? record?.templateId ?? crypto.randomUUID();
+      const templateId = template?.id ?? record?.templateId ?? newId();
       const consumedAt = new Date(time).toISOString();
       const draft: DrinkRecord = {
-        id: record?.id ?? crypto.randomUUID(), templateId, typeId: snapshot?.typeId ?? templateId,
+        id: record?.id ?? newId(), templateId, typeId: snapshot?.typeId ?? templateId,
         name: name.trim(), category, plainWater: effectivePlain, volume, quantity, consumedAt,
         dayKey: dayKey(new Date(time)), nutrition: perServing, sources: savedSources, abv: category === 'alcohol' ? abv : null,
         alcoholManual: category === 'alcohol' && alcoholManual, specification,
@@ -95,7 +95,7 @@ export function DrinkForm({ template, record, templateMode = false, reselected =
       const templateId = template?.id ?? record?.templateId ?? `custom-${name.trim().toLowerCase().replace(/\s+/g, '-')}`;
       const now = new Date().toISOString();
       const fingerprint = `${templateId}|${volume}|${specification}|${JSON.stringify(perServing)}|${abv ?? ''}`;
-      const favorite: FavoriteDrink = { id: crypto.randomUUID(), fingerprint, templateId, typeId: snapshot?.typeId ?? templateId, name: name.trim(), category, plainWater: category === 'water' && plainWater, volume, nutrition: perServing, sources: { ...sources, alcohol: alcoholManual ? 'manual' : 'estimated' }, abv: category === 'alcohol' ? abv : null, alcoholManual: category === 'alcohol' && alcoholManual, specification, pinnedAt: now, lastUsedAt: now };
+      const favorite: FavoriteDrink = { id: newId(), fingerprint, templateId, typeId: snapshot?.typeId ?? templateId, name: name.trim(), category, plainWater: category === 'water' && plainWater, volume, nutrition: perServing, sources: { ...sources, alcohol: alcoholManual ? 'manual' : 'estimated' }, abv: category === 'alcohol' ? abv : null, alcoholManual: category === 'alcohol' && alcoholManual, specification, pinnedAt: now, lastUsedAt: now };
       await pinFavorite(favorite);
       setPinned(true);
     } catch (e) { setError(errorText(e)); }

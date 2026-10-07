@@ -5,7 +5,7 @@ import { zhCN } from 'date-fns/locale';
 import { ArrowRight, ChevronRight, CupSoda, Leaf, Plus, Search, Settings2, ShieldCheck, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { db, clearData, reorderFavorites, saveRecord, saveSettings, touchFavorite, unpinFavorite } from './db';
 import { categories } from './catalog';
-import { aggregate, dayKey, pretty } from './domain';
+import { aggregate, cloneValue, dayKey, newId, pretty } from './domain';
 import { categoryIds, type Category, type DrinkRecord, type FavoriteDrink, type Settings } from './model';
 import { AddButton, BackHeader, Badge, Empty, ErrorMessage, Header, MetricSummary, RecordList, SectionTitle, errorText, useData, useToday } from './components';
 import styles from './App.module.css';
@@ -37,7 +37,7 @@ export function History() {
   const visibleFavorites = expandedFavorites ? favorites : favorites.slice(0, 4);
   async function quickLog(favorite: FavoriteDrink) {
     const now = new Date();
-    const record: DrinkRecord = { id: crypto.randomUUID(), templateId: favorite.templateId, typeId: favorite.typeId, name: favorite.name, category: favorite.category, plainWater: favorite.plainWater, volume: favorite.volume, quantity: 1, consumedAt: now.toISOString(), dayKey: dayKey(now), nutrition: structuredClone(favorite.nutrition), sources: structuredClone(favorite.sources), abv: favorite.abv, alcoholManual: favorite.alcoholManual, specification: favorite.specification };
+    const record: DrinkRecord = { id: newId(), templateId: favorite.templateId, typeId: favorite.typeId, name: favorite.name, category: favorite.category, plainWater: favorite.plainWater, volume: favorite.volume, quantity: 1, consumedAt: now.toISOString(), dayKey: dayKey(now), nutrition: cloneValue(favorite.nutrition), sources: cloneValue(favorite.sources), abv: favorite.abv, alcoholManual: favorite.alcoholManual, specification: favorite.specification };
     await saveRecord(record);
     await touchFavorite(favorite.id);
     setUndoId(record.id);

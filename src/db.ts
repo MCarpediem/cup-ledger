@@ -1,7 +1,7 @@
 import Dexie, { type Table } from 'dexie';
 import { catalog } from './catalog';
 import { defaultSettings, type Beverage, type DrinkRecord, type FavoriteDrink, type Settings } from './model';
-import { validateRecord } from './domain';
+import { cloneValue, validateRecord } from './domain';
 
 export class LedgerDB extends Dexie {
   records!: Table<DrinkRecord, string>;
@@ -28,8 +28,8 @@ export function mergedCatalog(overrides: Beverage[]) {
 export async function saveRecord(record: DrinkRecord, template?: Beverage, database = db) {
   validateRecord(record);
   await database.transaction('rw', database.records, database.templates, async () => {
-    await database.records.put(structuredClone(record));
-    if (template) await database.templates.put(structuredClone(template));
+    await database.records.put(cloneValue(record));
+    if (template) await database.templates.put(cloneValue(template));
   });
 }
 export async function saveSettings(settings: Settings, database = db) {
@@ -61,7 +61,7 @@ export async function pinFavorite(favorite: FavoriteDrink, database = db) {
   const current = await database.favorites.toArray();
   const sortOrder = current.reduce((max, item) => Math.max(max, item.sortOrder ?? -1), -1) + 1;
   const stored = { ...favorite, sortOrder };
-  await database.favorites.add(structuredClone(stored));
+  await database.favorites.add(cloneValue(stored));
   return stored;
 }
 export async function unpinFavorite(id: string, database = db) { await database.favorites.delete(id); }

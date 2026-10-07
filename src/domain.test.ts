@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aggregate, alcoholGrams, convertNutrition, dayKey, dominantDrink, inRange, periodRange, preferences, referenceState, servingNutrition, specificationNutrition, uniqueDrinks, validateRecord } from './domain';
+import { aggregate, alcoholGrams, cloneValue, convertNutrition, dayKey, dominantDrink, inRange, newId, periodRange, preferences, referenceState, servingNutrition, specificationNutrition, uniqueDrinks, validateRecord } from './domain';
 import { allSources, zeroNutrition, type DrinkRecord } from './model';
 import { catalog } from './catalog';
 
@@ -7,6 +7,14 @@ export function fixture(overrides: Partial<DrinkRecord> = {}): DrinkRecord {
   return { id: 'record-1', templateId: 'water-plain', typeId: 'water-plain', name: '普通饮用水', category: 'water', plainWater: true, volume: 250, quantity: 2, consumedAt: new Date(2024, 1, 29, 12).toISOString(), dayKey: '2024-02-29', nutrition: zeroNutrition(), sources: allSources('estimated'), abv: null, alcoholManual: false, specification: '', ...overrides };
 }
 describe('nutrition and reference values', () => {
+  it('creates IDs and clones values without relying on secure-origin-only APIs', () => {
+    const id = newId();
+    expect(id).toMatch(/^[\da-f]+-[\da-f-]+$/);
+    const original = { nested: { value: 1 } };
+    const copy = cloneValue(original);
+    copy.nested.value = 2;
+    expect(original.nested.value).toBe(1);
+  });
   it('converts per 100 ml to serving, preserving missing values and true zero', () => {
     const nutrition = { ...zeroNutrition(), caffeine: 40, sugar: null, protein: 2 };
     expect(convertNutrition(nutrition, 250, '100ml', 'serving')).toEqual({ caffeine: 100, sugar: null, protein: 5, calories: 0, alcohol: 0 });

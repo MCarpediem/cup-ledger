@@ -8,13 +8,19 @@ export class LedgerDB extends Dexie {
   templates!: Table<Beverage, string>;
   settings!: Table<Settings, string>;
   favorites!: Table<FavoriteDrink, string>;
+  sync!: Table<{ id: string; payload: unknown }, string>;
   constructor(name = 'cup-ledger') {
     super(name);
     this.version(1).stores({ records: 'id, dayKey, consumedAt, category', templates: 'id, category', settings: 'id' });
     this.version(2).stores({ records: 'id, dayKey, consumedAt, category', templates: 'id, category', settings: 'id', favorites: 'id, templateId, lastUsedAt' });
+    this.version(3).stores({ sync: 'id' });
   }
 }
-export const db = new LedgerDB();
+export let db = new LedgerDB();
+export function selectAccountDatabase(userId: string) {
+  db = new LedgerDB(`cup-ledger:user:${userId}`);
+  return db;
+}
 export function mergedCatalog(overrides: Beverage[]) {
   const map = new Map(catalog.map(item => [item.id, item]));
   overrides.forEach(item => {

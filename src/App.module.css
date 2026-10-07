@@ -228,3 +228,5 @@
 .dateMonths button{min-height:48px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--ink);font-size:15px}
 .dateMonths button[aria-pressed=true]{background:#F0E4D7;border-color:var(--accent);color:var(--accent);font-weight:650}
 @media(max-width:600px){.dateDialog{inset:auto 0 0;margin:0 auto;width:100%;padding:12px 20px calc(24px + env(safe-area-inset-bottom));border-radius:20px 20px 0 0}.dateDialogHeader{margin-bottom:12px}}
+.syncStatus{position:relative;max-width:600px;margin:16px auto 100px;display:flex;flex-wrap:wrap;gap:12px;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--surface);color:var(--muted);font-size:14px;overflow-wrap:anywhere}
+.syncStatus span{flex-basis:100%}.syncStatus button{padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--accent)}

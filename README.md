@@ -56,11 +56,41 @@ npm run check      # 依次运行以上全部检查
 - `src/Stats.tsx`：日历和统计。
 - `src/pages.tsx`、`src/components.tsx`、`src/App.tsx`：页面、共用组件和路由。
 
+## 账号与云端同步
+
+项目支持可选的 Supabase 邮箱账号和跨设备同步。复制 `.env.example` 为 `.env.local`，填写 Supabase Project URL 与 Publishable/anon key；然后在 Supabase SQL Editor 依次执行 `supabase/schema.sql` 和 `supabase/sync-migration.sql`。已经建表的项目只需执行后一个脚本。不要把 service role key 放进前端环境变量。
+
+未配置环境变量时，应用继续使用原来的本地 IndexedDB 模式。配置后，邮箱登录支持独立账号缓存，每 15 秒及恢复网络、窗口聚焦时同步，也可点击“立即同步”。原本地日记不会自动上传，可点击“导入原本地记录”并确认，原数据保留。导入沿用账号目标设置。
+
+同步基于上次成功快照合并独立修改和删除；数据库函数使用更新时间检查，防止同时上传互相覆盖。同一项数据被同时修改会停止同步并显示错误，保留本地修改，目前没有自动解决冲突界面。网络请求期间的新改动会留待下轮同步。尚未支持关闭网页后的后台上传、密码找回或完整离线启动。
+
+端到端本地功能测试会清空服务进程的 Supabase 环境变量，不连接真实项目；云同步测试使用模拟传输，真实邮箱验证、数据库函数及多设备联调仍需项目环境验证。
+
 ## 静态部署
 
 `npm run build` 生成 `dist/`。将其部署到支持 HTTPS 的静态站点，并把不存在的应用路径回退到 `/index.html`；资源请求应照常返回对应文件或 404。例如 Nginx 的页面 location 可配置 `try_files $uri $uri/ /index.html;`。Vite 的 `npm run preview` 可用于本机检查构建结果。
 
-IndexedDB 与站点来源（协议、域名、端口）绑定。变更访问地址会看到另一份独立数据。首版没有账号、云同步、备份或导出；清理浏览器数据可能导致日记丢失。
+IndexedDB 与站点来源（协议、域名、端口）绑定。配置云同步后，清理浏览器数据仍可从账号恢复；未登录或未配置 Supabase 时，数据仍只保存在当前设备。
+
+### GitHub + Vercel 部署
+
+1. 在 GitHub 新建一个空仓库（例如 `cup-ledger`），不要勾选初始化 README、`.gitignore` 或许可证。
+2. 在项目目录执行：
+
+   ```sh
+   git remote add origin https://github.com/<你的用户名>/<仓库名>.git
+   git push -u origin master
+   ```
+
+3. 登录 [Vercel](https://vercel.com)，选择 **Add New Project → Import Git Repository**，选择刚推送的 GitHub 仓库，保持默认的 Vite 构建设置（Build Command 为 `npm run build`，Output Directory 为 `dist`）。
+4. 在 Vercel 项目的 **Settings → Environment Variables** 添加：
+
+   - `VITE_SUPABASE_URL`：Supabase 项目 URL
+   - `VITE_SUPABASE_PUBLISHABLE_KEY`：Supabase publishable/anon key
+
+   两个变量都要为 Production、Preview、Development 环境启用，然后重新部署。仓库中的 `vercel.json` 会让 React Router 的页面刷新正常回退到 `index.html`。
+
+5. 在 Supabase SQL Editor 依次执行 `supabase/schema.sql` 和 `supabase/sync-migration.sql`，再在部署后的站点测试注册、登录和同步。不要把 service role key 配置到 Vercel 或提交到 GitHub。
 
 ## 2026-10 界面更新
 

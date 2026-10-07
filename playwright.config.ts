@@ -12,6 +12,7 @@ export default defineConfig({
     { name: 'webkit-mobile', use: { ...devices['iPhone 13'] } },
   ],
   webServer: {
+    env: { VITE_SUPABASE_URL: '', VITE_SUPABASE_PUBLISHABLE_KEY: '' },
     command: 'npm run dev -- --port 4173 --strictPort',
     url: 'http://127.0.0.1:4173',
     reuseExistingServer: !process.env.CI,

@@ -3,8 +3,14 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $planPath = Join-Path $root 'cup-ledger-tech-plan.md'
 $prdPath = Join-Path $root 'cup-ledger-prd.md'
+$workflowPath = Join-Path $root '.github/workflows/deploy-pages.yml'
+$viteConfigPath = Join-Path $root 'vite.config.ts'
+$mainPath = Join-Path $root 'src/main.tsx'
 $plan = Get-Content -LiteralPath $planPath -Raw -Encoding UTF8
 $prd = Get-Content -LiteralPath $prdPath -Raw -Encoding UTF8
+$workflow = Get-Content -LiteralPath $workflowPath -Raw -Encoding UTF8
+$viteConfig = Get-Content -LiteralPath $viteConfigPath -Raw -Encoding UTF8
+$main = Get-Content -LiteralPath $mainPath -Raw -Encoding UTF8
 
 function Assert-Contains([string] $Text, [string] $Pattern, [string] $Description) {
     if ($Text -notmatch $Pattern) {
@@ -42,6 +48,11 @@ Assert-Contains $plan '类别色不承担风险状态含义' 'separate category 
 Assert-Contains $plan 'Playwright 手机视口覆盖今日、全屏选择与配置、记录和周/月/年统计' 'mobile visual verification'
 Assert-Contains $prd '趋势图与分类占比的具体图形形式及细节' 'remaining PRD chart decision'
 Assert-Contains $plan '趋势图与分类占比的具体图形形式及细节' 'remaining plan chart decision'
+Assert-Contains $workflow 'actions/deploy-pages@v4' 'GitHub Pages deploy action'
+Assert-Contains $workflow 'npm run build' 'GitHub Pages build command'
+Assert-Contains $viteConfig ([regex]::Escape("base: command === 'build' ? '/cup-ledger/' : '/'")) 'GitHub Pages base path'
+Assert-Contains $main ([regex]::Escape("basename={import.meta.env.PROD ? '/cup-ledger' : undefined}")) 'GitHub Pages route base'
+Assert-Contains $workflow 'cp dist/index.html dist/404.html' 'GitHub Pages SPA fallback'
 
 $relativeLinks = [regex]::Matches($plan, '\]\((?!https?://|#)([^)]+)\)')
 foreach ($link in $relativeLinks) {

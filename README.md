@@ -72,25 +72,30 @@ npm run check      # 依次运行以上全部检查
 
 IndexedDB 与站点来源（协议、域名、端口）绑定。配置云同步后，清理浏览器数据仍可从账号恢复；未登录或未配置 Supabase 时，数据仍只保存在当前设备。
 
-### GitHub + Vercel 部署
+### GitHub Pages 部署
 
-1. 在 GitHub 新建一个空仓库（例如 `cup-ledger`），不要勾选初始化 README、`.gitignore` 或许可证。
-2. 在项目目录执行：
+项目已包含 `.github/workflows/deploy-pages.yml`。把最新代码推送到 `main` 后，GitHub Actions 会自动执行 `npm ci`、`npm run build` 并发布到 GitHub Pages。工作流会额外生成 `404.html` 作为单页应用回退，因此刷新 `/records`、`/stats` 等页面不会出现 404，也不会影响 Supabase 邮箱确认链接。
 
-   ```sh
-   git remote add origin https://github.com/<你的用户名>/<仓库名>.git
-   git push -u origin master
-   ```
-
-3. 登录 [Vercel](https://vercel.com)，选择 **Add New Project → Import Git Repository**，选择刚推送的 GitHub 仓库，保持默认的 Vite 构建设置（Build Command 为 `npm run build`，Output Directory 为 `dist`）。
-4. 在 Vercel 项目的 **Settings → Environment Variables** 添加：
+1. 在 GitHub 仓库打开 **Settings → Pages**，将 **Source** 设为 **GitHub Actions**。
+2. 如果要启用账号和跨设备同步，打开 **Settings → Secrets and variables → Actions**，新增两个 Repository secrets：
 
    - `VITE_SUPABASE_URL`：Supabase 项目 URL
    - `VITE_SUPABASE_PUBLISHABLE_KEY`：Supabase publishable/anon key
 
-   两个变量都要为 Production、Preview、Development 环境启用，然后重新部署。仓库中的 `vercel.json` 会让 React Router 的页面刷新正常回退到 `index.html`。
+   不配置这两个 secret 也可以部署，但网站只使用当前设备的 IndexedDB，不提供登录和云同步。不要把 service role key 放入 secret 或提交到 GitHub。
+3. 在本地项目目录执行：
 
-5. 在 Supabase SQL Editor 依次执行 `supabase/schema.sql` 和 `supabase/sync-migration.sql`，再在部署后的站点测试注册、登录和同步。不要把 service role key 配置到 Vercel 或提交到 GitHub。
+   ```sh
+   git add .
+   git commit -m "chore: deploy with GitHub Pages"
+   git push origin main
+   ```
+
+4. 打开仓库的 **Actions** 页面，等待 `Deploy to GitHub Pages` 完成。网站地址通常是：
+
+   `https://mcarpediem.github.io/cup-ledger/`
+
+5. 在 Supabase SQL Editor 依次执行 `supabase/schema.sql` 和 `supabase/sync-migration.sql`。在 Supabase **Authentication → URL Configuration** 把 Site URL 设为 `https://mcarpediem.github.io/cup-ledger/`，并将该站点加入 Redirect URLs；否则邮箱确认可能跳回旧地址。然后测试部署后的注册、登录和同步。
 
 ## 2026-10 界面更新
 
